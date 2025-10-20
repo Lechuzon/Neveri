@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💸 Cambios Neveri - Sistema de gestión de remesas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQDnv7LGHMcxbM4_IWpqP6uPrkcV0AAfo",
+            authDomain: "cambios-neveri-64cc3.firebaseapp.com",
+            projectId: "cambios-neveri-64cc3",
+            storageBucket: "cambios-neveri-64cc3.firebasestorage.app",
+            messagingSenderId: "319863307669",
+            appId: "1:319863307669:web:1f679a3b87067c03018a9c"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables
+        window.remesas = [];
+        window.editingId = null;
+        window.currentFilter = 'all';
+        window.db = db;
+        window.firestoreLoaded = false;
+
+        // Firebase functions
+        window.loadRemesasFromFirestore = async function() {
+            try {
+                showLoadingState();
+                console.log("Intentando conectar con Firebase...");
+                console.log("Base de datos:", db);
+                
+                const q = query(collection(db, 'remesas'), orderBy('fecha', 'desc'));
+                console.log("Query creada:", q);
+                
+                const querySnapshot = await getDocs(q);
+                console.log("Datos obtenidos:", querySnapshot.size, "documentos");
+                
+                window.remesas = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    console.log("Documento:", doc.id, data);
+                    window.remesas.push({
+                        id: doc.id,
+                        ...data,
+                        firestoreId: doc.id
+                    });
+                });
+                
+                window.firestoreLoaded = true;
+                hideLoadingState();
+                updateStats();
+                filterRemesas();
+                
+                console.log("Configurando listener en tiempo real...");
+                // Setup real-time listener
+                onSnapshot(q, (snapshot) => {
+                    if (window.firestoreLoaded) {
+                        console.log("Actualización en tiempo real:", snapshot.size, "documentos");
+                        window.remesas = [];
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            window.remesas.push({
+                                id: doc.id,
+                                ...data,
+                                firestoreId: doc.id
+                            });
+                        });
+                        updateStats();
+                        filterRemesas();
+                    }
+                });
+                
+                showSuccess("Conectado a Firebase correctamente");
+                
+            } catch (error) {
+                console.error("Error completo al cargar:", error);
+                console.error("Código:", error.code);
+                console.error("Mensaje:", error.message);
+                hideLoadingState();
+                
+                let errorMsg = "Error de conexión";
+                if (error.code === 'permission-denied') {
+                    errorMsg = "Error de permisos en Firestore. Revisa las reglas de seguridad.";
+                } else if (error.code === 'unavailable') {
+                    errorMsg = "Firebase no disponible. Verifica tu internet.";
+                } else {
+                    errorMsg = `Error de conexión: ${error.message}`;
+                }
+                
+                showError(errorMsg);
+            }
+        };
+
+        window.saveRemesaToFirestore = async function(remesaData) {
+            try {
+                showSavingState();
+                console.log("Intentando guardar:", remesaData);
+                
+                if (window.editingId) {
+                    // Update existing
+                    console.log("Actualizando documento:", window.editingId);
+                    const docRef = doc(db, 'remesas', window.editingId);
+                    await updateDoc(docRef, remesaData);
+                    showSuccess("Remesa actualizada correctamente");
+                } else {
+                    // Add new
+                    console.log("Agregando nuevo documento a colección 'remesas'");
+                    const docRef = await addDoc(collection(db, 'remesas'), remesaData);
+                    console.log("Documento creado con ID:", docRef.id);
+                    showSuccess("Remesa guardada correctamente");
+                }
+                hideSavingState();
+                closeModal();
+            } catch (error) {
+                console.error("Error completo:", error);
+                console.error("Código de error:", error.code);
+                console.error("Mensaje de error:", error.message);
+                hideSavingState();
+                
+                let errorMsg = "Error desconocido";
+                if (error.code === 'permission-denied') {
+                    errorMsg = "Error de permisos. Verifica las reglas de Firestore.";
+                } else if (error.code === 'unavailable') {
+                    errorMsg = "Firebase no disponible. Verifica tu conexión a internet.";
+                } else if (error.code === 'failed-precondition') {
+                    errorMsg = "Error de configuración de Firebase.";
+                } else {
+                    errorMsg = `Error: ${error.message}`;
+                }
+                
+                showError(errorMsg);
+            }
+        };
+
+        window.deleteRemesaFromFirestore = async function(firestoreId) {
+            try {
+                await deleteDoc(doc(db, 'remesas', firestoreId));
+                showSuccess("Remesa eliminada correctamente");
+            } catch (error) {
+                console.error("Error deleting remesa:", error);
+                showError("Error al eliminar. Intenta nuevamente.");
+            }
+        };
+
+        // UI Helper functions
+        window.showLoadingState = function() {
+            const container = document.getElementById('remesasList');
+            container.innerHTML = `
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <h3>Cargando datos...</h3>
+                    <p>Sincronizando con la nube</p>
+                </div>
+            `;
+        };
+
+        window.hideLoadingState = function() {
+            // Loading will be replaced by actual content
+        };
+
+        window.showSavingState = function() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            submitBtn.disabled = true;
+        };
+
+        window.hideSavingState = function() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = window.editingId ? 'Actualizar Remesa' : 'Guardar Remesa';
+            submitBtn.disabled = false;
+        };
+
+        window.showSuccess = function(message) {
+            showNotification(message, 'success');
+        };
+
+        window.showError = function(message) {
+            showNotification(message, 'error');
+        };
+
+        window.showNotification = function(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        };
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRemesasFromFirestore();
+        });
+    </script>
+
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --danger-color: #ef4444;
+            --warning-color: #f97316;
+            --success-color: #22c55e;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 16px;
+            --border-radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(120deg); }
+            66% { transform: translateY(-20px) rotate(240deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .header .sync-status {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--border-radius);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sync-status i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card .icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+            100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        }
+
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Controls */
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: var(--transition);
+        }
+
+        .btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #16a34a 100%);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-secondary);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .sort-select {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .sort-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Remesas List */
+        .remesas-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .remesas-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .remesa-item {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .remesa-item:last-child {
+            border-bottom: none;
+        }
+
+        .remesa-item:hover {
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateX(8px);
+        }
+
+        .remesa-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-color);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .remesa-item:hover::before {
+            opacity: 1;
+        }
+
+        .remesa-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .remesa-info {
+            flex: 1;
+        }
+
+        .remesa-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .remesa-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .remesa-amount {
+            text-align: right;
+            margin-left: 1rem;
+        }
+
+        .remesa-amount .amount {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .remesa-amount .date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .remesa-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .btn-edit {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+        }
+
+        .btn-edit:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .btn-delete:hover {
+            background: var(--danger-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideInUp 0.4s ease-out;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .close-btn:hover {
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .btn-cancel {
+            background: var(--surface-alt);
+            color: var(--text-secondary);
+        }
+
+        .btn-cancel:hover {
+            background: var(--text-muted);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: var(--transition);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .notification i {
+            font-size: 1.2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-buttons {
+                justify-content: center;
+            }
+
+            .remesa-item {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .remesa-amount {
+                text-align: left;
+                margin-left: 0;
+            }
+
+            .remesa-actions {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+
+            .notification {
+                top: 1rem;
+                right: 1rem;
+                left: 1rem;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>💸 Cambios Neveri</h1>
+            <p>Sistema de gestión de remesas</p>
+            <div class="sync-status">
+                <i class="fas fa-cloud"></i>
+                <span>Sincronizado en la nube</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="value" id="totalClientes">0</div>
+                <div class="label">Total Clientes</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="value" id="totalRemesas">$0</div>
+                <div class="label">Total Remesas</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="value" id="remesasHoy">0</div>
+                <div class="label">Remesas Hoy</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="value" id="promedioRemesa">$0</div>
+                <div class="label">Promedio por Remesa</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="controls-row">
+                <button class="btn btn-success" onclick="openModal()">
+                    <i class="fas fa-plus"></i> Nueva Remesa
+                </button>
+                
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Todas</button>
+                    <button class="filter-btn" data-filter="today">Hoy</button>
+                    <button class="filter-btn" data-filter="week">Esta Semana</button>
+                    <button class="filter-btn" data-filter="month">Este Mes</button>
+                </div>
+                
+                <select class="sort-select" id="sortSelect" onchange="filterRemesas()">
+                    <option value="date-desc">Más recientes</option>
+                    <option value="date-asc">Más antiguos</option>
+                    <option value="amount-desc">Mayor monto</option>
+                    <option value="amount-asc">Menor monto</option>
+                    <option value="name-asc">Nombre A-Z</option>
+                    <option value="name-desc">Nombre Z-A</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="remesas-container">
+            <div class="remesas-list" id="remesasList">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <h3>Cargando datos...</h3>
+                    <p>Conectando con Firebase</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nueva Remesa</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="remesaForm">
+                <div class="form-group">
+                    <label for="agregadoPor">Agregado por *</label>
+                    <input type="text" id="agregadoPor" name="agregadoPor" placeholder="Tu nombre o usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="clienteNombre">Nombre del Cliente *</label>
+                    <input type="text" id="clienteNombre" name="clienteNombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="clienteEmail">Email</label>
+                    <input type="email" id="clienteEmail" name="clienteEmail">
+                </div>
+                <div class="form-group">
+                    <label for="clienteTelefono">Teléfono</label>
+                    <input type="tel" id="clienteTelefono" name="clienteTelefono">
+                </div>
+                <div class="form-group">
+                    <label for="monto">Monto *</label>
+                    <input type="number" id="monto" name="monto" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="moneda">Moneda *</label>
+                    <select id="moneda" name="moneda" required>
+                        <option value="USD">USD - Dólar Americano</option>
+                        <option value="PEN">PEN - Sol Peruano</option>
+                        <option value="VES">VES - Bolívar</option>
+                        <option value="COP">COP - Peso Colombiano</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="destinatario">Destinatario *</label>
+                    <input type="text" id="destinatario" name="destinatario" required>
+                </div>
+                <div class="form-group">
+                    <label for="paisDestino">País de Destino *</label>
+                    <select id="paisDestino" name="paisDestino" required>
+                        <option value="">Seleccionar país</option>
+                        <option value="Venezuela">Venezuela</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Ecuador">Ecuador</option>
+                        <option value="Perú">Perú</option>
+                        <option value="España">España</option>
+                        <option value="Estados Unidos">Estados Unidos</option>
+                        <option value="México">México</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Chile">Chile</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" placeholder="Notas adicionales..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="submitBtn">Guardar Remesa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(remesa = null) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const form = document.getElementById('remesaForm');
+            
+            if (remesa) {
+                modalTitle.textContent = 'Editar Remesa';
+                submitBtn.textContent = 'Actualizar Remesa';
+                window.editingId = remesa.firestoreId;
+                
+                // Llenar formulario
+                document.getElementById('agregadoPor').value = remesa.agregadoPor || 'Usuario';
+                document.getElementById('clienteNombre').value = remesa.clienteNombre;
+                document.getElementById('clienteEmail').value = remesa.clienteEmail || '';
+                document.getElementById('clienteTelefono').value = remesa.clienteTelefono || '';
+                document.getElementById('monto').value = remesa.monto;
+                document.getElementById('moneda').value = remesa.moneda;
+                document.getElementById('destinatario').value = remesa.destinatario;
+                document.getElementById('paisDestino').value = remesa.paisDestino;
+                document.getElementById('observaciones').value = remesa.observaciones || '';
+            } else {
+                modalTitle.textContent = 'Nueva Remesa';
+                submitBtn.textContent = 'Guardar Remesa';
+                window.editingId = null;
+                form.reset();
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('show');
+            window.editingId = null;
+        }
+
+        function deleteRemesa(firestoreId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta remesa?')) {
+                window.deleteRemesaFromFirestore(firestoreId);
+            }
+        }
+
+        function updateStats() {
+            const today = new Date().toDateString();
+            const remesasHoy = window.remesas.filter(r => new Date(r.fecha).toDateString() === today);
+            const totalMonto = window.remesas.reduce((sum, r) => sum + r.monto, 0);
+            
+            document.getElementById('totalClientes').textContent = window.remesas.length;
+            document.getElementById('totalRemesas').textContent = `$${totalMonto.toLocaleString()}`;
+            document.getElementById('remesasHoy').textContent = remesasHoy.length;
+            document.getElementById('promedioRemesa').textContent = window.remesas.length > 0 ? 
+                `$${(totalMonto / window.remesas.length).toLocaleString()}` : '$0';
+        }
+
+        function filterRemesas() {
+            let filteredRemesas = [...window.remesas];
+            const now = new Date();
+            
+            // Aplicar filtro de tiempo
+            switch (window.currentFilter) {
+                case 'today':
+                    filteredRemesas = filteredRemesas.filter(r => 
+                        new Date(r.fecha).toDateString() === now.toDateString()
+                    );
+                    break;
+                case 'week':
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    filteredRemesas = filteredRemesas.filter(r => new Date(r.fecha) >= weekAgo);
+                    break;
+                case 'month':
+                    const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                    filteredRemesas = filteredRemesas.filter(r => new Date(r.fecha) >= monthAgo);
+                    break;
+            }
+            
+            // Aplicar ordenamiento
+            const sortValue = document.getElementById('sortSelect').value;
+            switch (sortValue) {
+                case 'date-asc':
+                    filteredRemesas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+                    break;
+                case 'date-desc':
+                    filteredRemesas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                    break;
+                case 'amount-asc':
+                    filteredRemesas.sort((a, b) => a.monto - b.monto);
+                    break;
+                case 'amount-desc':
+                    filteredRemesas.sort((a, b) => b.monto - a.monto);
+                    break;
+                case 'name-asc':
+                    filteredRemesas.sort((a, b) => a.clienteNombre.localeCompare(b.clienteNombre));
+                    break;
+                case 'name-desc':
+                    filteredRemesas.sort((a, b) => b.clienteNombre.localeCompare(a.clienteNombre));
+                    break;
+            }
+            
+            renderRemesas(filteredRemesas);
+        }
+
+        function renderRemesas(remesasList) {
+            const container = document.getElementById('remesasList');
+            
+            if (remesasList.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No hay remesas registradas</h3>
+                        <p>Haz clic en "Nueva Remesa" para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = remesasList.map(remesa => `
+                <div class="remesa-item">
+                    <div class="remesa-avatar">
+                        ${remesa.clienteNombre.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="remesa-info">
+                        <h3>${remesa.clienteNombre}</h3>
+                        <p><i class="fas fa-user-friends"></i> Para: ${remesa.destinatario}</p>
+                        <p><i class="fas fa-globe"></i> ${remesa.paisDestino}</p>
+                        <p><i class="fas fa-user-plus"></i> Agregado por: <strong>${remesa.agregadoPor || 'Usuario'}</strong></p>
+                        ${remesa.observaciones ? `<p><i class="fas fa-comment"></i> ${remesa.observaciones}</p>` : ''}
+                    </div>
+                    <div class="remesa-amount">
+                        <div class="amount">$${remesa.monto.toLocaleString()} ${remesa.moneda}</div>
+                        <div class="date">${new Date(remesa.fecha).toLocaleDateString()}</div>
+                    </div>
+                    <div class="remesa-actions">
+                        <button class="btn-icon btn-edit" onclick="openModal(${JSON.stringify(remesa).replace(/"/g, '&quot;')})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon btn-delete" onclick="deleteRemesa('${remesa.firestoreId}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Event listeners
+        document.getElementById('remesaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            const remesaData = {
+                agregadoPor: formData.get('agregadoPor'),
+                clienteNombre: formData.get('clienteNombre'),
+                clienteEmail: formData.get('clienteEmail'),
+                clienteTelefono: formData.get('clienteTelefono'),
+                monto: parseFloat(formData.get('monto')),
+                moneda: formData.get('moneda'),
+                destinatario: formData.get('destinatario'),
+                paisDestino: formData.get('paisDestino'),
+                observaciones: formData.get('observaciones'),
+                fecha: window.editingId ? window.remesas.find(r => r.firestoreId === window.editingId).fecha : new Date().toISOString()
+            };
+            
+            window.saveRemesaToFirestore(remesaData);
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                window.currentFilter = this.dataset.filter;
+                filterRemesas();
+            });
+        });
+
+        // Modal events
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('modal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openModal();
+            }
+        });
+    </script>
+</body>
+</html>

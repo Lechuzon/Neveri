@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💸 Cambios Neveri - Sistema de gestión de remesas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --danger-color: #ef4444;
+            --warning-color: #f97316;
+            --success-color: #22c55e;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 16px;
+            --border-radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                rgba(59, 130, 246, 0.1) 0%, 
+                rgba(139, 92, 246, 0.1) 25%, 
+                rgba(16, 185, 129, 0.1) 50%, 
+                rgba(245, 158, 11, 0.1) 75%, 
+                rgba(239, 68, 68, 0.1) 100%);
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            33% { transform: rotate(120deg) scale(1.1); }
+            66% { transform: rotate(240deg) scale(0.9); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .stat-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .stat-icon.money {
+            background: linear-gradient(135deg, var(--secondary-color), #059669);
+            color: white;
+        }
+
+        .stat-icon.count {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3.5rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 500;
+            background: var(--surface-alt);
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            background: var(--surface);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .sort-select {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            background: var(--primary-color) !important;
+            color: #fff !important;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .sort-select option {
+            background: var(--primary-color) !important;
+            color: white !important;
+            padding: 0.5rem;
+        }
+
+        .sort-select:focus {
+            border-color: var(--primary-dark);
+            background: var(--primary-dark) !important;
+            color: white !important;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Forzar estilos específicos para el select */
+        select.sort-select {
+            color: #ffffff !important;
+            background-color: #3b82f6 !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        select.sort-select option {
+            color: #ffffff !important;
+            background-color: #3b82f6 !important;
+        }
+
+        /* Forzar color del texto seleccionado */
+        select.sort-select::-webkit-input-placeholder {
+            color: #ffffff !important;
+        }
+
+        select.sort-select:-moz-placeholder {
+            color: #ffffff !important;
+        }
+
+        select.sort-select::-moz-placeholder {
+            color: #ffffff !important;
+        }
+
+        select.sort-select:-ms-input-placeholder {
+            color: #ffffff !important;
+        }
+
+        /* Estilos adicionales para forzar el color blanco */
+        select.sort-select,
+        select#sortSelect,
+        .sort-select,
+        #sortSelect {
+            color: #fff !important;
+            background: #3b82f6 !important;
+            border: 2px solid #3b82f6 !important;
+        }
+
+        select.sort-select option,
+        select#sortSelect option,
+        .sort-select option,
+        #sortSelect option {
+            color: #fff !important;
+            background: #3b82f6 !important;
+        }
+
+        /* Máxima especificidad para sobrescribir el color del body */
+        body select.sort-select,
+        body select#sortSelect,
+        body .sort-select,
+        body #sortSelect {
+            color: #ffffff !important;
+            background-color: #3b82f6 !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+
+        /* Dropdown personalizado */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .custom-dropdown-button {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 150px;
+        }
+
+        .custom-dropdown-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .custom-dropdown-button .arrow {
+            margin-left: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .custom-dropdown.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        .custom-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .custom-dropdown.open .custom-dropdown-menu {
+            display: block;
+        }
+
+        .custom-dropdown-option {
+            padding: 0.75rem 1rem;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-dropdown-option:hover {
+            background: var(--primary-dark);
+        }
+
+        .custom-dropdown-option.selected {
+            background: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        /* Remesas List */
+        .remesas-container {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .remesa-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .remesa-item:last-child {
+            border-bottom: none;
+        }
+
+        .remesa-item:hover {
+            background: var(--surface-alt);
+            transform: translateX(8px);
+        }
+
+        .remesa-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .remesa-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .remesa-info {
+            flex: 1;
+        }
+
+        .remesa-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .remesa-details {
+            display: flex;
+            gap: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            flex-wrap: wrap;
+        }
+
+        .remesa-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .remesa-amount {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--secondary-color);
+            text-align: right;
+        }
+
+        .remesa-date-badge {
+            background: var(--accent-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            opacity: 0.6;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-description {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--secondary-color), #059669);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--accent-color), #d97706);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4);
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.5);
+        }
+
+        .fab:active {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: var(--border-radius-lg);
+            max-width: 600px;
+            margin: 5% auto;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+            background: #dc2626;
+        }
+
+        /* Form */
+        .form-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            background: var(--surface-alt);
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            background: var(--surface);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input:valid {
+            border-color: var(--success-color);
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            animation: slideInRight 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, var(--success-color), #16a34a);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            .remesa-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .remesa-amount {
+                align-self: flex-end;
+                font-size: 1.5rem;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .modal-content {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .fab {
+                bottom: 1rem;
+                right: 1rem;
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #0f172a;
+                --surface: #1e293b;
+                --surface-alt: #334155;
+                --text-primary: #f1f5f9;
+                --text-secondary: #cbd5e1;
+                --text-muted: #64748b;
+                --border: #334155;
+            }
+        }
+
+        /* FORZAR COLOR BLANCO EN DROPDOWN - VERSIÓN SIMPLE */
+        select.sort-select,
+        select#sortSelect {
+            color: #ffffff !important;
+            background-color: #3b82f6 !important;
+            border: 2px solid #3b82f6 !important;
+        }
+
+        select.sort-select option,
+        select#sortSelect option {
+            color: #ffffff !important;
+            background-color: #3b82f6 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-money-bill-wave"></i> Cambios Neveri</h1>
+            <p>Sistema de gestión de remesas</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon money">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-value" id="totalAmount">$0.00</div>
+                <div class="stat-label">Total Enviado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon count">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Total Remesas</div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-section">
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="Buscar por cliente, empleado o monto..." id="searchInput">
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">
+                    <i class="fas fa-list"></i> Todos
+                </button>
+                <button class="filter-btn" data-filter="today">
+                    <i class="fas fa-calendar-day"></i> Hoy
+                </button>
+                <button class="filter-btn" data-filter="week">
+                    <i class="fas fa-calendar-week"></i> Esta Semana
+                </button>
+                <button class="filter-btn" data-filter="month">
+                    <i class="fas fa-calendar-alt"></i> Este Mes
+                </button>
+            </div>
+            <select class="sort-select" id="sortSelect">
+                <option value="date-desc">Más Recientes</option>
+                <option value="date-asc">Más Antiguos</option>
+                <option value="amount-desc">Mayor Monto</option>
+                <option value="amount-asc">Menor Monto</option>
+                <option value="name-asc">Nombre A-Z</option>
+                <option value="name-desc">Nombre Z-A</option>
+            </select>
+        </div>
+
+        <!-- Remesas List -->
+        <div class="remesas-container" id="remesasList">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <div class="empty-title">¡Bienvenido a Cambios Neveri!</div>
+                <div class="empty-description">
+                    No hay remesas registradas aún. Comienza agregando datos de prueba o crea tu primera remesa.
+                </div>
+                <button class="btn btn-warning" onclick="addSampleData()">
+                    <i class="fas fa-magic"></i> Agregar Datos de Prueba
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" onclick="openModal()" title="Agregar Nueva Remesa">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Nueva Remesa
+                </h2>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="remesaForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i> Nombre del Cliente
+                        </label>
+                        <input type="text" class="form-input" id="nombreCliente" required 
+                               placeholder="Ej: Juan Pérez García">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-money-bill"></i> Monto a Enviar
+                        </label>
+                        <input type="number" class="form-input" id="monto" step="0.01" required 
+                               placeholder="0.00" min="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar"></i> Fecha de Envío
+                        </label>
+                        <input type="date" class="form-input" id="fechaEnvio" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user-tie"></i> Registrado por
+                        </label>
+                        <input type="text" class="form-input" id="usuarioRegistro" required 
+                               placeholder="Ej: María López Rodríguez">
+                    </div>
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Registrar Remesa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let remesas = [];
+        let filteredRemesas = [];
+        let currentFilter = 'all';
+        let currentSort = 'date-desc';
+
+        // Datos de ejemplo mejorados
+        const sampleData = [
+            {
+                id: 1,
+                nombreCliente: 'Juan Carlos Pérez García',
+                monto: 1500.00,
+                fechaEnvio: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+                usuarioRegistro: 'María Elena López',
+                fechaCreacion: new Date(Date.now() - 86400000)
+            },
+            {
+                id: 2,
+                nombreCliente: 'Ana Isabel Rodríguez Morales',
+                monto: 850.50,
+                fechaEnvio: new Date(Date.now() - 172800000).toISOString().split('T')[0],
+                usuarioRegistro: 'Carlos Mendoza Silva',
+                fechaCreacion: new Date(Date.now() - 172800000)
+            },
+            {
+                id: 3,
+                nombreCliente: 'Roberto Silva Fernández',
+                monto: 2200.75,
+                fechaEnvio: new Date(Date.now() - 259200000).toISOString().split('T')[0],
+                usuarioRegistro: 'María Elena López',
+                fechaCreacion: new Date(Date.now() - 259200000)
+            },
+            {
+                id: 4,
+                nombreCliente: 'Carmen Beatriz Morales',
+                monto: 950.00,
+                fechaEnvio: new Date(Date.now() - 345600000).toISOString().split('T')[0],
+                usuarioRegistro: 'Pedro Antonio Ruiz',
+                fechaCreacion: new Date(Date.now() - 345600000)
+            },
+            {
+                id: 5,
+                nombreCliente: 'Luis Fernando Castro Jiménez',
+                monto: 1800.25,
+                fechaEnvio: new Date(Date.now() - 432000000).toISOString().split('T')[0],
+                usuarioRegistro: 'Carlos Mendoza Silva',
+                fechaCreacion: new Date(Date.now() - 432000000)
+            },
+            {
+                id: 6,
+                nombreCliente: 'Isabella María Vásquez',
+                monto: 675.80,
+                fechaEnvio: new Date(Date.now() - 518400000).toISOString().split('T')[0],
+                usuarioRegistro: 'Ana Sofía Herrera',
+                fechaCreacion: new Date(Date.now() - 518400000)
+            },
+            {
+                id: 7,
+                nombreCliente: 'Diego Alejandro Ramírez',
+                monto: 3200.00,
+                fechaEnvio: new Date(Date.now() - 604800000).toISOString().split('T')[0],
+                usuarioRegistro: 'Pedro Antonio Ruiz',
+                fechaCreacion: new Date(Date.now() - 604800000)
+            }
+        ];
+
+        function updateStats() {
+            const totalAmount = remesas.reduce((sum, remesa) => sum + remesa.monto, 0);
+            const totalCount = remesas.length;
+            
+            // Animación de conteo
+            animateValue('totalAmount', 0, totalAmount, 1500, (value) => 
+                `$${value.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+            );
+            animateValue('totalCount', 0, totalCount, 1000, (value) => Math.floor(value).toString());
+        }
+
+        function animateValue(elementId, start, end, duration, formatter) {
+            const element = document.getElementById(elementId);
+            const startTime = Date.now();
+            
+            function update() {
+                const now = Date.now();
+                const progress = Math.min((now - startTime) / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                const current = start + (end - start) * easeProgress;
+                
+                element.textContent = formatter(current);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            update();
+        }
+
+        function getDateDifference(date) {
+            const now = new Date();
+            const remesaDate = new Date(date);
+            const diffTime = Math.abs(now - remesaDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) return 'Hoy';
+            if (diffDays === 2) return 'Ayer';
+            if (diffDays <= 7) return `Hace ${diffDays - 1} días`;
+            if (diffDays <= 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+            return `Hace ${Math.floor(diffDays / 30)} meses`;
+        }
+
+        function renderRemesas(remesasList = filteredRemesas) {
+            const container = document.getElementById('remesasList');
+            
+            if (remesasList.length === 0) {
+                const isEmpty = remesas.length === 0;
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-${isEmpty ? 'inbox' : 'search'}"></i>
+                        </div>
+                        <div class="empty-title">
+                            ${isEmpty ? '¡Bienvenido a Cambios Neveri!' : 'No se encontraron resultados'}
+                        </div>
+                        <div class="empty-description">
+                            ${isEmpty 
+                                ? 'No hay remesas registradas aún. Comienza agregando datos de prueba o crea tu primera remesa.'
+                                : 'Intenta ajustar tus filtros de búsqueda o criterios de ordenación.'
+                            }
+                        </div>
+                        ${isEmpty 
+                            ? '<button class="btn btn-warning" onclick="addSampleData()"><i class="fas fa-magic"></i> Agregar Datos de Prueba</button>'
+                            : '<button class="btn btn-primary" onclick="clearFilters()"><i class="fas fa-refresh"></i> Limpiar Filtros</button>'
+                        }
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = remesasList.map(remesa => `
+                <div class="remesa-item" data-id="${remesa.id}">
+                    <div class="remesa-avatar">
+                        ${remesa.nombreCliente.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    </div>
+                    <div class="remesa-info">
+                        <div class="remesa-name">${remesa.nombreCliente}</div>
+                        <div class="remesa-details">
+                            <div class="remesa-detail-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>${new Date(remesa.fechaEnvio).toLocaleDateString('es-ES', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                })}</span>
+                            </div>
+                            <div class="remesa-detail-item">
+                                <i class="fas fa-user-tie"></i>
+                                <span>${remesa.usuarioRegistro}</span>
+                            </div>
+                            <div class="remesa-detail-item">
+                                <span class="remesa-date-badge">${getDateDifference(remesa.fechaEnvio)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="remesa-amount">
+                        $${remesa.monto.toLocaleString('es-ES', {minimumFractionDigits: 2})}
+                    </div>
+                </div>
+            `).join('');
+
+            // Agregar animación de entrada
+            const items = container.querySelectorAll('.remesa-item');
+            items.forEach((item, index) => {
+                item.style.animation = `slideIn 0.5s ease ${index * 0.1}s both`;
+            });
+        }
+
+        function filterRemesas() {
+            let filtered = [...remesas];
+            
+            // Aplicar filtro de tiempo
+            if (currentFilter !== 'all') {
+                const now = new Date();
+                filtered = filtered.filter(remesa => {
+                    const remesaDate = new Date(remesa.fechaEnvio);
+                    
+                    switch (currentFilter) {
+                        case 'today':
+                            return remesaDate.toDateString() === now.toDateString();
+                        case 'week':
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            return remesaDate >= weekAgo;
+                        case 'month':
+                            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            return remesaDate >= monthAgo;
+                        default:
+                            return true;
+                    }
+                });
+            }
+            
+            // Aplicar búsqueda
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            if (searchQuery) {
+                filtered = filtered.filter(remesa =>
+                    remesa.nombreCliente.toLowerCase().includes(searchQuery) ||
+                    remesa.usuarioRegistro.toLowerCase().includes(searchQuery) ||
+                    remesa.monto.toString().includes(searchQuery)
+                );
+            }
+            
+            // Aplicar ordenación
+            filtered.sort((a, b) => {
+                switch (currentSort) {
+                    case 'date-desc':
+                        return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
+                    case 'date-asc':
+                        return new Date(a.fechaCreacion) - new Date(b.fechaCreacion);
+                    case 'amount-desc':
+                        return b.monto - a.monto;
+                    case 'amount-asc':
+                        return a.monto - b.monto;
+                    case 'name-asc':
+                        return a.nombreCliente.localeCompare(b.nombreCliente);
+                    case 'name-desc':
+                        return b.nombreCliente.localeCompare(a.nombreCliente);
+                    default:
+                        return 0;
+                }
+            });
+            
+            filteredRemesas = filtered;
+            renderRemesas();
+        }
+
+        function clearFilters() {
+            currentFilter = 'all';
+            currentSort = 'date-desc';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sortSelect').value = 'date-desc';
+            
+            // Actualizar botones de filtro
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === 'all');
+            });
+            
+            filterRemesas();
+        }
+
+        function addSampleData() {
+            // Mostrar loading
+            const container = document.getElementById('remesasList');
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+            
+            setTimeout(() => {
+                remesas = [...sampleData];
+                updateStats();
+                filterRemesas();
+                showNotification('¡Datos de ejemplo agregados exitosamente!', 'success');
+            }, 1000);
+        }
+
+        function openModal() {
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('fechaEnvio').value = new Date().toISOString().split('T')[0];
+            
+            // Focus en el primer campo
+            setTimeout(() => {
+                document.getElementById('nombreCliente').focus();
+            }, 300);
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('remesaForm').reset();
+        }
+
+        function addRemesa(remesa) {
+            const newRemesa = {
+                id: Math.max(...remesas.map(r => r.id), 0) + 1,
+                ...remesa,
+                fechaCreacion: new Date()
+            };
+            
+            remesas.unshift(newRemesa);
+            updateStats();
+            filterRemesas();
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Event Listeners
+        document.getElementById('remesaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                nombreCliente: document.getElementById('nombreCliente').value.trim(),
+                monto: parseFloat(document.getElementById('monto').value),
+                fechaEnvio: document.getElementById('fechaEnvio').value,
+                usuarioRegistro: document.getElementById('usuarioRegistro').value.trim()
+            };
+            
+            // Validaciones adicionales
+            if (!formData.nombreCliente || !formData.usuarioRegistro) {
+                showNotification('Por favor complete todos los campos', 'error');
+                return;
+            }
+            
+            if (formData.monto <= 0) {
+                showNotification('El monto debe ser mayor a 0', 'error');
+                return;
+            }
+            
+            addRemesa(formData);
+            closeModal();
+            showNotification('¡Remesa registrada exitosamente!', 'success');
+        });
+
+        document.getElementById('searchInput').addEventListener('input', filterRemesas);
+        document.getElementById('sortSelect').addEventListener('change', function(e) {
+            currentSort = e.target.value;
+            filterRemesas();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                filterRemesas();
+            });
+        });
+
+        // Modal events
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('modal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openModal();
+            }
+        });
+
+        // Forzar color blanco en el dropdown
+        function forceDropdownWhiteText() {
+            const sortSelect = document.getElementById('sortSelect');
+            if (sortSelect) {
+                // Aplicar estilos directamente via JavaScript
+                sortSelect.style.color = '#ffffff';
+                sortSelect.style.backgroundColor = '#3b82f6';
+                sortSelect.style.border = '2px solid #3b82f6';
+                
+                // Aplicar a todas las opciones
+                const options = sortSelect.querySelectorAll('option');
+                options.forEach(option => {
+                    option.style.color = '#ffffff';
+                    option.style.backgroundColor = '#3b82f6';
+                });
+                
+                // Forzar actualización visual
+                sortSelect.addEventListener('change', function() {
+                    setTimeout(() => {
+                        sortSelect.style.color = '#ffffff';
+                        sortSelect.style.backgroundColor = '#3b82f6';
+                    }, 10);
+                });
+            }
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', forceDropdownWhiteText);
+        
+        // También ejecutar después de un pequeño delay
+        setTimeout(forceDropdownWhiteText, 100);
+        setTimeout(forceDropdownWhiteText, 500);
+
+        // Dropdown personalizado
+        let currentSortValue = 'date-desc';
+        
+        function initCustomDropdown() {
+            const dropdown = document.getElementById('customDropdown');
+            const dropdownButton = document.getElementById('dropdownButton');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const selectedOption = document.getElementById('selectedOption');
+            
+            // Toggle dropdown
+            dropdownButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+            
+            // Seleccionar opción
+            dropdownMenu.addEventListener('click', function(e) {
+                if (e.target.classList.contains('custom-dropdown-option')) {
+                    // Remover selección anterior
+                    document.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Agregar selección nueva
+                    e.target.classList.add('selected');
+                    selectedOption.textContent = e.target.textContent;
+                    currentSortValue = e.target.dataset.value;
+                    
+                    // Cerrar dropdown
+                    dropdown.classList.remove('open');
+                    
+                    // Aplicar ordenamiento
+                    filterRemesas();
+                }
+            });
+            
+            // Cerrar al hacer clic fuera
+            document.addEventListener('click', function() {
+                dropdown.classList.remove('open');
+            });
+        }
+        
+        // Actualizar la función de obtener valor de ordenamiento
+        function getSortValue() {
+            return currentSortValue;
+        }
+
+        // Initialize
+        updateStats();
+        filterRemesas();
+        updateStats();
+        filterRemesas();
+    </script>
+</body>
+</html>

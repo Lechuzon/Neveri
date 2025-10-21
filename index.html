@@ -665,11 +665,15 @@
 
         .login-header h1 {
             font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header h1 .gradient-text {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.5rem;
         }
 
         .login-header p {
@@ -858,11 +862,15 @@
         .header h1 {
             font-size: 3.5rem;
             font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+        
+        .header h1 .gradient-text {
             background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.5rem;
             text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -1593,7 +1601,7 @@
     <div id="loginScreen" class="login-container" style="display: none;">
         <div class="login-card">
             <div class="login-header">
-                <h1>💸 Cambios Neveri</h1>
+                <h1>💸 <span class="gradient-text">Cambios Neveri</span></h1>
                 <p>Sistema de gestión de remesas</p>
                 <div class="login-subtitle">Iniciar sesión para continuar</div>
             </div>
@@ -1633,7 +1641,7 @@
         <div id="userInfo"></div>
         
         <div class="header">
-            <h1>💸 Cambios Neveri</h1>
+            <h1>💸 <span class="gradient-text">Cambios Neveri</span></h1>
             <p>Sistema de gestión de remesas</p>
             <div class="sync-status">
                 <i class="fas fa-cloud"></i>

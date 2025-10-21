@@ -42,6 +42,7 @@
         window.loadRemesasFromFirestore = async function() {
             try {
                 showLoadingState();
+                console.log("=== INICIANDO CARGA DE REMESAS ===");
                 console.log("Intentando conectar con Firebase...");
                 console.log("Base de datos:", db);
                 
@@ -49,18 +50,30 @@
                 console.log("Query creada:", q);
                 
                 const querySnapshot = await getDocs(q);
-                console.log("Datos obtenidos:", querySnapshot.size, "documentos");
+                console.log("=== RESULTADOS DE FIREBASE ===");
+                console.log("Documentos encontrados:", querySnapshot.size);
+                
+                if (querySnapshot.empty) {
+                    console.log("❌ No se encontraron documentos en la colección 'remesas'");
+                } else {
+                    console.log("✅ Documentos encontrados, procesando...");
+                }
                 
                 window.remesas = [];
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    console.log("Documento:", doc.id, data);
+                    console.log("📄 Documento ID:", doc.id);
+                    console.log("📄 Datos:", data);
                     window.remesas.push({
                         id: doc.id,
                         ...data,
                         firestoreId: doc.id
                     });
                 });
+                
+                console.log("=== RESUMEN FINAL ===");
+                console.log("Total remesas cargadas:", window.remesas.length);
+                console.log("Array de remesas:", window.remesas);
                 
                 window.firestoreLoaded = true;
                 hideLoadingState();

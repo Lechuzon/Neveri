@@ -417,20 +417,26 @@
                 
                 userDoc.forEach((doc) => {
                     if (doc.data().uid === uid) {
-                        window.userRole = doc.data().role || 'operador';
+                        const userData = doc.data();
+                        window.userRole = userData.role || 'operador';
+                        window.currentUserData = userData; // Almacenar datos del usuario
                         userFound = true;
                     }
                 });
                 
                 if (!userFound) {
-                    // Usuario nuevo, asignar rol por defecto
-                    await setDoc(doc(db, 'users', uid), {
+                    // Usuario nuevo, asignar rol por defecto y crear datos básicos
+                    const userData = {
                         uid: uid,
                         email: window.currentUser.email,
                         role: 'operador',
+                        name: getUserDisplayName(), // Usar el nombre generado automáticamente
                         createdAt: new Date()
-                    });
+                    };
+                    
+                    await setDoc(doc(db, 'users', uid), userData);
                     window.userRole = 'operador';
+                    window.currentUserData = userData;
                 }
                 
                 setupUserPermissions();
@@ -1312,6 +1318,27 @@
             resize: vertical;
         }
 
+        .readonly-field {
+            background-color: #f8f9fa !important;
+            color: #6c757d;
+            cursor: not-allowed;
+            border-color: #e9ecef !important;
+        }
+
+        .readonly-field:focus {
+            background-color: #f8f9fa !important;
+            border-color: #e9ecef !important;
+            box-shadow: none !important;
+        }
+
+        .field-note {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
         .form-actions {
             display: flex;
             gap: 1rem;
@@ -1589,7 +1616,9 @@
             <form id="remesaForm">
                 <div class="form-group">
                     <label for="agregadoPor">Agregado por *</label>
-                    <input type="text" id="agregadoPor" name="agregadoPor" placeholder="Tu nombre o usuario" required>
+                    <input type="text" id="agregadoPor" name="agregadoPor" readonly class="readonly-field" 
+                           title="Se completa automáticamente con el usuario logueado">
+                    <small class="field-note">Se completa automáticamente</small>
                 </div>
                 <div class="form-group">
                     <label for="clienteNombre">Nombre del Cliente *</label>
@@ -1649,6 +1678,28 @@
     </div> <!-- End mainApp -->
 
     <script>
+        // Función para obtener el nombre del usuario logueado
+        function getUserDisplayName() {
+            if (!window.currentUser) return 'Usuario desconocido';
+            
+            // Si hay información del usuario en el almacenamiento local, usarla
+            if (window.currentUserData && window.currentUserData.name) {
+                return window.currentUserData.name;
+            }
+            
+            // Extraer nombre del email (antes del @)
+            const emailName = window.currentUser.email.split('@')[0];
+            
+            // Capitalizar primera letra y reemplazar puntos/guiones por espacios
+            const displayName = emailName
+                .replace(/[._-]/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            
+            return displayName;
+        }
+
         function openModal(remesa = null) {
             const modal = document.getElementById('modal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1661,7 +1712,7 @@
                 window.editingId = remesa.firestoreId;
                 
                 // Llenar formulario
-                document.getElementById('agregadoPor').value = remesa.agregadoPor || 'Usuario';
+                document.getElementById('agregadoPor').value = remesa.agregadoPor || getUserDisplayName();
                 document.getElementById('clienteNombre').value = remesa.clienteNombre;
                 document.getElementById('clienteEmail').value = remesa.clienteEmail || '';
                 document.getElementById('clienteTelefono').value = remesa.clienteTelefono || '';
@@ -1675,6 +1726,9 @@
                 submitBtn.textContent = 'Guardar Remesa';
                 window.editingId = null;
                 form.reset();
+                
+                // Autocompletar con el usuario actual para nuevas remesas
+                document.getElementById('agregadoPor').value = getUserDisplayName();
             }
             
             modal.classList.add('show');

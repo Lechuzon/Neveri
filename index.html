@@ -1040,16 +1040,7 @@
 
         .btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success-color) 0%, #16a34a 100%);
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0,             gap: 0.5rem;
             flex-wrap: wrap;
         }
 
@@ -1543,10 +1534,62 @@
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
+                padding-top: 5rem; /* Espacio para el userInfo */
+            }
+
+            #userInfo {
+                position: fixed;
+                top: 0.5rem;
+                left: 50%;
+                transform: translateX(-50%);
+                right: auto;
+                width: calc(100% - 2rem);
+                max-width: 400px;
+                justify-content: center;
+                z-index: 1000;
+                font-size: 0.85rem;
+                padding: 0.6rem 0.8rem;
+            }
+
+            #userInfo .user-icon {
+                font-size: 1rem;
+            }
+
+            .user-role {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .btn-logout {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.75rem;
+            }
+
+            .header {
+                margin-top: 3rem; /* Espacio adicional debajo del userInfo */
+                text-align: center;
             }
 
             .header h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
+            }
+
+            .header h1 svg {
+                width: 36px;
+                height: 36px;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .sync-status {
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
             }
 
             .controls-row {

@@ -344,28 +344,118 @@
         };
 
         window.setupUserPermissions = function() {
+            console.log('Configurando permisos para rol:', window.userRole);
+            
             const userInfo = document.getElementById('userInfo');
             if (userInfo) {
+                const roleColors = {
+                    'admin': '#e74c3c',
+                    'operador': '#3498db', 
+                    'consulta': '#95a5a6'
+                };
+                
+                const roleColor = roleColors[window.userRole] || '#3498db';
+                
                 userInfo.innerHTML = `
                     <span><i class="fas fa-user"></i> ${window.currentUser.email}</span>
-                    <span class="user-role">${window.userRole.toUpperCase()}</span>
+                    <span class="user-role" style="background-color: ${roleColor};">
+                        ${window.userRole.toUpperCase()}
+                    </span>
                     <button onclick="logout()" class="btn-logout">
-                        <i class="fas fa-sign-out-alt"></i>
+                        <i class="fas fa-sign-out-alt"></i> Salir
                     </button>
                 `;
             }
             
-            // Configurar permisos según el rol
+            // Definir permisos por rol
+            const permissions = {
+                'admin': {
+                    canCreate: true,
+                    canEdit: true,
+                    canDelete: true,
+                    canView: true
+                },
+                'operador': {
+                    canCreate: true,
+                    canEdit: true,
+                    canDelete: false,
+                    canView: true
+                },
+                'consulta': {
+                    canCreate: false,
+                    canEdit: false,
+                    canDelete: false,
+                    canView: true
+                }
+            };
+            
+            const userPermissions = permissions[window.userRole] || permissions['operador'];
+            
+            // Aplicar permisos a botones existentes
             const deleteButtons = document.querySelectorAll('.btn-delete');
             const editButtons = document.querySelectorAll('.btn-edit');
+            const newRemesaBtn = document.getElementById('newRemesaBtn');
             
-            if (window.userRole === 'consulta') {
-                deleteButtons.forEach(btn => btn.style.display = 'none');
-                editButtons.forEach(btn => btn.style.display = 'none');
-                document.getElementById('remesaForm').style.display = 'none';
-            } else if (window.userRole === 'operador') {
-                deleteButtons.forEach(btn => btn.style.display = 'none');
+            deleteButtons.forEach(btn => {
+                btn.style.display = userPermissions.canDelete ? 'inline-block' : 'none';
+            });
+            
+            editButtons.forEach(btn => {
+                btn.style.display = userPermissions.canEdit ? 'inline-block' : 'none';
+            });
+            
+            if (newRemesaBtn) {
+                newRemesaBtn.style.display = userPermissions.canCreate ? 'inline-block' : 'none';
             }
+            
+            // Mostrar mensaje informativo según el rol
+            showRoleMessage(window.userRole);
+        };
+        
+        function showRoleMessage(role) {
+            const messages = {
+                'admin': 'Tienes acceso completo: crear, editar y eliminar remesas',
+                'operador': 'Puedes crear y editar remesas (no eliminar)',
+                'consulta': 'Solo puedes consultar las remesas existentes'
+            };
+            
+            const message = messages[role] || messages['operador'];
+            showNotification(message, 'info');
+        }
+        
+        // Función para verificar permisos antes de ejecutar acciones
+        window.hasPermission = function(action) {
+            const permissions = {
+                'admin': ['create', 'edit', 'delete', 'view'],
+                'operador': ['create', 'edit', 'view'],
+                'consulta': ['view']
+            };
+            
+            const userPermissions = permissions[window.userRole] || permissions['operador'];
+            return userPermissions.includes(action);
+        };
+        
+        // Interceptar acciones según permisos
+        const originalDeleteRemesa = window.deleteRemesa;
+        window.deleteRemesa = function(id) {
+            if (!hasPermission('delete')) {
+                showNotification('No tienes permisos para eliminar remesas', 'error');
+                return;
+            }
+            return originalDeleteRemesa(id);
+        };
+        
+        const originalOpenModal = window.openModal;
+        window.openModal = function(remesa) {
+            if (!remesa && !hasPermission('create')) {
+                showNotification('No tienes permisos para crear remesas', 'error');
+                return;
+            }
+            if (remesa && !hasPermission('edit')) {
+                showNotification('No tienes permisos para editar remesas', 'error');
+                return;
+            }
+            return originalOpenModal(remesa);
         };
 
         window.showLoginScreen = function() {
@@ -1358,7 +1448,7 @@
 
         <div class="controls">
             <div class="controls-row">
-                <button class="btn btn-success" onclick="openModal()">
+                <button id="newRemesaBtn" class="btn btn-success" onclick="openModal()">
                     <i class="fas fa-plus"></i> Nueva Remesa
                 </button>
                 
@@ -1595,12 +1685,16 @@
                         <div class="time">${new Date(remesa.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>
                     <div class="remesa-actions">
+                        ${window.hasPermission && window.hasPermission('edit') ? `
                         <button class="btn-icon btn-edit" onclick="openModal(${JSON.stringify(remesa).replace(/"/g, '&quot;')})">
                             <i class="fas fa-edit"></i>
                         </button>
+                        ` : ''}
+                        ${window.hasPermission && window.hasPermission('delete') ? `
                         <button class="btn-icon btn-delete" onclick="deleteRemesa('${remesa.firestoreId}')">
                             <i class="fas fa-trash"></i>
                         </button>
+                        ` : ''}
                     </div>
                 </div>
             `).join('');

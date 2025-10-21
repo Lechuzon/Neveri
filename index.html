@@ -348,36 +348,26 @@
                 console.error('No se encontró el formulario de login');
             }
             
-            // Variable para controlar si es la primera verificación de auth
-            let isInitialAuthCheck = true;
+            // Timeout de seguridad para evitar que se quede pegado
+            setTimeout(() => {
+                if (document.getElementById('initialLoadingScreen').style.display !== 'none') {
+                    console.log('Timeout de seguridad - mostrando login');
+                    showLoginScreen();
+                }
+            }, 5000); // 5 segundos máximo
             
             // Check authentication state
             onAuthStateChanged(auth, (user) => {
-                console.log('Estado de autenticación cambiado:', user ? user.email : 'sin usuario');
+                console.log('=== AUTH STATE CHANGED ===');
+                console.log('Usuario:', user ? user.email : 'sin usuario');
                 
                 if (user) {
-                    console.log('Usuario autenticado:', user.email);
+                    console.log('✅ Usuario autenticado:', user.email);
                     window.currentUser = user;
                     checkUserRole(user.uid);
                 } else {
-                    console.log('No hay usuario logueado');
-                    // Solo mostrar login si no es la verificación inicial o si ya pasó tiempo suficiente
-                    if (!isInitialAuthCheck) {
-                        showLoginScreen();
-                    } else {
-                        // Dar tiempo a Firebase para verificar autenticación
-                        setTimeout(() => {
-                            if (!window.currentUser) {
-                                showLoginScreen();
-                            }
-                            isInitialAuthCheck = false;
-                        }, 1000);
-                    }
-                }
-                
-                // Después de la primera verificación, cambiar el flag
-                if (isInitialAuthCheck) {
-                    isInitialAuthCheck = false;
+                    console.log('❌ No hay usuario logueado - mostrando login');
+                    showLoginScreen();
                 }
             });
         });
@@ -541,6 +531,10 @@
             
             // Mostrar mensaje informativo según el rol
             showRoleMessage(window.userRole);
+            
+            // CRÍTICO: Mostrar la aplicación principal después de configurar permisos
+            console.log('✅ Permisos configurados - mostrando aplicación principal');
+            showMainApp();
         };
         
         function showRoleMessage(role) {
@@ -600,14 +594,14 @@
         };
 
         window.showLoginScreen = function() {
-            console.log('Mostrando pantalla de login');
+            console.log('🔑 Mostrando pantalla de login');
             document.getElementById('initialLoadingScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
         };
 
         window.showMainApp = function() {
-            console.log('Mostrando aplicación principal');
+            console.log('🏠 Mostrando aplicación principal');
             document.getElementById('initialLoadingScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';

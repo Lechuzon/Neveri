@@ -217,8 +217,51 @@
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM cargado, inicializando autenticación...');
+            
+            // Setup login form event listener
+            const loginForm = document.getElementById('loginForm');
+            console.log('Buscando loginForm:', loginForm);
+            
+            if (loginForm) {
+                console.log('✅ Formulario encontrado, agregando event listener');
+                loginForm.addEventListener('submit', function(e) {
+                    console.log('🔄 FORMULARIO ENVIADO');
+                    e.preventDefault();
+                    
+                    const emailField = document.getElementById('loginEmail');
+                    const passwordField = document.getElementById('loginPassword');
+                    const btn = document.getElementById('loginBtnText');
+                    
+                    console.log('Campos encontrados:');
+                    console.log('- Email field:', emailField);
+                    console.log('- Password field:', passwordField);
+                    console.log('- Button:', btn);
+                    
+                    if (emailField && passwordField) {
+                        const email = emailField.value;
+                        const password = passwordField.value;
+                        
+                        console.log('Valores obtenidos:');
+                        console.log('- Email:', email);
+                        console.log('- Password length:', password.length);
+                        
+                        if (btn) btn.textContent = 'Iniciando...';
+                        
+                        login(email, password).finally(() => {
+                            if (btn) btn.textContent = 'Iniciar Sesión';
+                        });
+                    } else {
+                        console.error('❌ No se encontraron los campos de email o password');
+                    }
+                });
+            } else {
+                console.error('❌ No se encontró el formulario loginForm');
+            }
+            
             // Check authentication state
             onAuthStateChanged(auth, (user) => {
+                console.log('Estado de autenticación cambiado:', user);
                 if (user) {
                     window.currentUser = user;
                     checkUserRole(user.uid);
@@ -230,15 +273,45 @@
 
         // Authentication functions
         window.login = async function(email, password) {
+            console.log('=== FUNCIÓN LOGIN INICIADA ===');
+            console.log('Email recibido:', email);
+            console.log('Password length:', password ? password.length : 'undefined');
+            
             try {
+                console.log('Llamando signInWithEmailAndPassword...');
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('✅ Login exitoso:', userCredential.user.email);
+                
                 window.currentUser = userCredential.user;
+                console.log('Verificando rol del usuario...');
                 await checkUserRole(userCredential.user.uid);
+                
+                console.log('Mostrando aplicación principal...');
                 showMainApp();
                 showNotification('Sesión iniciada correctamente', 'success');
+                
             } catch (error) {
-                console.error('Error de login:', error);
-                showNotification('Error de autenticación: ' + error.message, 'error');
+                console.error('❌ Error de login:', error.code, error.message);
+                let errorMessage = 'Error de autenticación';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'Usuario no encontrado';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Contraseña incorrecta';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Email inválido';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Demasiados intentos fallidos. Intenta más tarde';
+                        break;
+                    default:
+                        errorMessage = error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         };
 
@@ -312,11 +385,13 @@
         };
 
         window.showLoginScreen = function() {
+            console.log('Mostrando pantalla de login');
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
         };
 
         window.showMainApp = function() {
+            console.log('Mostrando aplicación principal');
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             loadRemesasFromFirestore();
@@ -1596,18 +1671,7 @@
             }
         });
 
-        // Login form event listener
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const btn = document.getElementById('loginBtnText');
-            
-            btn.textContent = 'Iniciando...';
-            login(email, password).finally(() => {
-                btn.textContent = 'Iniciar Sesión';
-            });
-        });
+        </script>
     </div> <!-- End mainApp -->
 
 </body>

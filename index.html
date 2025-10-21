@@ -10,7 +10,8 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, onSnapshot, query, orderBy, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -25,13 +26,17 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         // Global variables
         window.remesas = [];
         window.editingId = null;
         window.currentFilter = 'all';
         window.db = db;
+        window.auth = auth;
         window.firestoreLoaded = false;
+        window.currentUser = null;
+        window.userRole = null;
 
         // Firebase functions
         window.loadRemesasFromFirestore = async function() {
@@ -212,8 +217,110 @@
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            loadRemesasFromFirestore();
+            // Check authentication state
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    window.currentUser = user;
+                    checkUserRole(user.uid);
+                } else {
+                    showLoginScreen();
+                }
+            });
         });
+
+        // Authentication functions
+        window.login = async function(email, password) {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                window.currentUser = userCredential.user;
+                await checkUserRole(userCredential.user.uid);
+                showMainApp();
+                showNotification('Sesión iniciada correctamente', 'success');
+            } catch (error) {
+                console.error('Error de login:', error);
+                showNotification('Error de autenticación: ' + error.message, 'error');
+            }
+        };
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.currentUser = null;
+                window.userRole = null;
+                showLoginScreen();
+                showNotification('Sesión cerrada', 'success');
+            } catch (error) {
+                console.error('Error de logout:', error);
+                showNotification('Error al cerrar sesión', 'error');
+            }
+        };
+
+        window.checkUserRole = async function(uid) {
+            try {
+                const userDoc = await getDocs(query(collection(db, 'users'), orderBy('email')));
+                let userFound = false;
+                
+                userDoc.forEach((doc) => {
+                    if (doc.data().uid === uid) {
+                        window.userRole = doc.data().role || 'operador';
+                        userFound = true;
+                    }
+                });
+                
+                if (!userFound) {
+                    // Usuario nuevo, asignar rol por defecto
+                    await setDoc(doc(db, 'users', uid), {
+                        uid: uid,
+                        email: window.currentUser.email,
+                        role: 'operador',
+                        createdAt: new Date()
+                    });
+                    window.userRole = 'operador';
+                }
+                
+                setupUserPermissions();
+            } catch (error) {
+                console.error('Error checking user role:', error);
+                window.userRole = 'operador'; // Rol por defecto
+                setupUserPermissions();
+            }
+        };
+
+        window.setupUserPermissions = function() {
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                userInfo.innerHTML = `
+                    <span><i class="fas fa-user"></i> ${window.currentUser.email}</span>
+                    <span class="user-role">${window.userRole.toUpperCase()}</span>
+                    <button onclick="logout()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                `;
+            }
+            
+            // Configurar permisos según el rol
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+            const editButtons = document.querySelectorAll('.btn-edit');
+            
+            if (window.userRole === 'consulta') {
+                deleteButtons.forEach(btn => btn.style.display = 'none');
+                editButtons.forEach(btn => btn.style.display = 'none');
+                document.getElementById('remesaForm').style.display = 'none';
+            } else if (window.userRole === 'operador') {
+                deleteButtons.forEach(btn => btn.style.display = 'none');
+            }
+        };
+
+        window.showLoginScreen = function() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        };
+
+        window.showMainApp = function() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadRemesasFromFirestore();
+        };
     </script>
 
     <style>
@@ -237,6 +344,169 @@
             --border-radius: 16px;
             --border-radius-lg: 24px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Login Styles */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .login-form .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-form label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .login-form input {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: var(--surface);
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .login-footer p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* User Info Styles */
+        #userInfo {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        .user-role {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
         }
 
         * {
@@ -944,7 +1214,49 @@
 <body>
     <div class="bg-animation"></div>
     
-    <div class="container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>💸 Cambios Neveri</h1>
+                <p>Sistema de gestión de remesas</p>
+                <div class="login-subtitle">Iniciar sesión para continuar</div>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginEmail">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </label>
+                    <input type="email" id="loginEmail" required placeholder="usuario@cambiosneveri.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">
+                        <i class="fas fa-lock"></i>
+                        Contraseña
+                    </label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span id="loginBtnText">Iniciar Sesión</span>
+                </button>
+            </form>
+            
+            <div class="login-footer">
+                <p>¿No tienes cuenta? Contacta al administrador</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App Content (hidden initially) -->
+    <div id="mainApp" class="container" style="display: none;">
+        <!-- User Info -->
+        <div id="userInfo"></div>
+        
         <div class="header">
             <h1>💸 Cambios Neveri</h1>
             <p>Sistema de gestión de remesas</p>
@@ -1087,6 +1399,7 @@
             </form>
         </div>
     </div>
+    </div> <!-- End mainApp -->
 
     <script>
         function openModal(remesa = null) {
@@ -1282,6 +1595,20 @@
                 openModal();
             }
         });
-    </script>
+
+        // Login form event listener
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtnText');
+            
+            btn.textContent = 'Iniciando...';
+            login(email, password).finally(() => {
+                btn.textContent = 'Iniciar Sesión';
+            });
+        });
+    </div> <!-- End mainApp -->
+
 </body>
 </html>

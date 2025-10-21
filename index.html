@@ -216,7 +216,7 @@
         };
 
         // Función para obtener el símbolo correcto de la moneda
-        function getCurrencySymbol(moneda) {
+        window.getCurrencySymbol = function(moneda) {
             const symbols = {
                 'USD': '$',
                 'EUR': '€',
@@ -235,13 +235,13 @@
             };
             
             return symbols[moneda] || '$';
-        }
+        };
 
         // Función para formatear el monto con la moneda correcta
-        function formatCurrency(monto, moneda) {
-            const symbol = getCurrencySymbol(moneda);
+        window.formatCurrency = function(monto, moneda) {
+            const symbol = window.getCurrencySymbol(moneda);
             return `${symbol}${monto.toLocaleString()}`;
-        }
+        };
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -1639,7 +1639,7 @@
             const totalText = Object.keys(totalsByMoneda).length === 0 ? 
                 '$0' : 
                 Object.entries(totalsByMoneda)
-                    .map(([moneda, total]) => `${formatCurrency(total, moneda)}`)
+                    .map(([moneda, total]) => `${window.formatCurrency(total, moneda)}`)
                     .join(' + ');
             
             document.getElementById('totalClientes').textContent = window.remesas.length;
@@ -1655,7 +1655,7 @@
                 const promedio = totalPrincipal / cantidadPrincipal;
                 
                 document.getElementById('promedioRemesa').textContent = 
-                    `${formatCurrency(promedio, monedaPrincipal)} (${monedaPrincipal})`;
+                    `${window.formatCurrency(promedio, monedaPrincipal)} (${monedaPrincipal})`;
             } else {
                 document.getElementById('promedioRemesa').textContent = '$0';
             }
@@ -1735,7 +1735,7 @@
                         ${remesa.observaciones ? `<p><i class="fas fa-comment"></i> ${remesa.observaciones}</p>` : ''}
                     </div>
                     <div class="remesa-amount">
-                        <div class="amount">${formatCurrency(remesa.monto, remesa.moneda)} ${remesa.moneda}</div>
+                        <div class="amount">${window.formatCurrency(remesa.monto, remesa.moneda)} ${remesa.moneda}</div>
                         <div class="date">${new Date(remesa.fecha).toLocaleDateString()}</div>
                         <div class="time">${new Date(remesa.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>

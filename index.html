@@ -221,42 +221,33 @@
             
             // Setup login form event listener
             const loginForm = document.getElementById('loginForm');
-            console.log('Buscando loginForm:', loginForm);
             
             if (loginForm) {
-                console.log('✅ Formulario encontrado, agregando event listener');
+                console.log('Configurando formulario de login');
                 loginForm.addEventListener('submit', function(e) {
-                    console.log('🔄 FORMULARIO ENVIADO');
                     e.preventDefault();
                     
                     const emailField = document.getElementById('loginEmail');
                     const passwordField = document.getElementById('loginPassword');
                     const btn = document.getElementById('loginBtnText');
                     
-                    console.log('Campos encontrados:');
-                    console.log('- Email field:', emailField);
-                    console.log('- Password field:', passwordField);
-                    console.log('- Button:', btn);
-                    
                     if (emailField && passwordField) {
-                        const email = emailField.value;
+                        const email = emailField.value.trim();
                         const password = passwordField.value;
                         
-                        console.log('Valores obtenidos:');
-                        console.log('- Email:', email);
-                        console.log('- Password length:', password.length);
-                        
-                        if (btn) btn.textContent = 'Iniciando...';
-                        
-                        login(email, password).finally(() => {
-                            if (btn) btn.textContent = 'Iniciar Sesión';
-                        });
-                    } else {
-                        console.error('❌ No se encontraron los campos de email o password');
+                        if (email && password) {
+                            if (btn) btn.textContent = 'Iniciando...';
+                            
+                            login(email, password).finally(() => {
+                                if (btn) btn.textContent = 'Iniciar Sesión';
+                            });
+                        } else {
+                            showNotification('Por favor completa todos los campos', 'error');
+                        }
                     }
                 });
             } else {
-                console.error('❌ No se encontró el formulario loginForm');
+                console.error('No se encontró el formulario de login');
             }
             
             // Check authentication state
@@ -273,25 +264,18 @@
 
         // Authentication functions
         window.login = async function(email, password) {
-            console.log('=== FUNCIÓN LOGIN INICIADA ===');
-            console.log('Email recibido:', email);
-            console.log('Password length:', password ? password.length : 'undefined');
-            
             try {
-                console.log('Llamando signInWithEmailAndPassword...');
+                console.log('Iniciando sesión para:', email);
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                console.log('✅ Login exitoso:', userCredential.user.email);
+                console.log('Login exitoso:', userCredential.user.email);
                 
                 window.currentUser = userCredential.user;
-                console.log('Verificando rol del usuario...');
                 await checkUserRole(userCredential.user.uid);
-                
-                console.log('Mostrando aplicación principal...');
                 showMainApp();
                 showNotification('Sesión iniciada correctamente', 'success');
                 
             } catch (error) {
-                console.error('❌ Error de login:', error.code, error.message);
+                console.error('Error de login:', error.code, error.message);
                 let errorMessage = 'Error de autenticación';
                 
                 switch (error.code) {

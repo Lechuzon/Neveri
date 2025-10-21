@@ -96,10 +96,14 @@
                         });
                         updateStats();
                         filterRemesas();
+                        // Crear backup automático cada vez que se actualizan los datos
+                        window.createBackup();
                     }
                 });
                 
                 showSuccess("Conectado a Firebase correctamente");
+                // Crear backup inicial
+                window.createBackup();
                 
             } catch (error) {
                 console.error("Error completo al cargar:", error);
@@ -163,11 +167,64 @@
 
         window.deleteRemesaFromFirestore = async function(firestoreId) {
             try {
+                // Buscar datos de la remesa antes de eliminar para logs
+                const remesa = window.remesas.find(r => r.firestoreId === firestoreId);
+                const timestamp = new Date().toISOString();
+                
+                console.log(`🗑️ INICIANDO ELIMINACIÓN - ${timestamp}`);
+                console.log(`- ID: ${firestoreId}`);
+                console.log(`- Cliente: ${remesa?.clienteNombre || 'unknown'}`);
+                console.log(`- Monto: ${remesa?.monto || 'unknown'}`);
+                console.log(`- Usuario: ${window.currentUser?.email || 'unknown'}`);
+                
                 await deleteDoc(doc(db, 'remesas', firestoreId));
+                
+                console.log(`✅ ELIMINACIÓN COMPLETADA - ${timestamp}`);
                 showSuccess("Remesa eliminada correctamente");
+                
+                // Log de auditoría más detallado
+                const auditLog = {
+                    action: 'DELETE',
+                    timestamp: timestamp,
+                    user: window.currentUser?.email || 'unknown',
+                    deletedItem: {
+                        id: firestoreId,
+                        cliente: remesa?.clienteNombre || 'unknown',
+                        monto: remesa?.monto || 'unknown'
+                    }
+                };
+                console.log('AUDIT LOG:', JSON.stringify(auditLog));
+                
             } catch (error) {
-                console.error("Error deleting remesa:", error);
+                console.error("❌ ERROR AL ELIMINAR:", error);
+                console.error("Código:", error.code);
+                console.error("Mensaje:", error.message);
                 showError("Error al eliminar. Intenta nuevamente.");
+            }
+        };
+
+        // Función de backup automático
+        window.createBackup = function() {
+            try {
+                const backup = {
+                    timestamp: new Date().toISOString(),
+                    user: window.currentUser?.email || 'unknown',
+                    totalRemesas: window.remesas.length,
+                    data: window.remesas
+                };
+                
+                localStorage.setItem('remesas_backup_' + Date.now(), JSON.stringify(backup));
+                console.log('✅ Backup creado automáticamente:', backup.timestamp);
+                
+                // Mantener solo los últimos 5 backups
+                const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('remesas_backup_'));
+                if (backupKeys.length > 5) {
+                    backupKeys.sort();
+                    localStorage.removeItem(backupKeys[0]);
+                }
+                
+            } catch (error) {
+                console.error('Error creando backup:', error);
             }
         };
 
@@ -1630,8 +1687,28 @@
         }
 
         function deleteRemesa(firestoreId) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta remesa?')) {
-                window.deleteRemesaFromFirestore(firestoreId);
+            // Buscar los datos de la remesa para mostrar en la confirmación
+            const remesa = window.remesas.find(r => r.firestoreId === firestoreId);
+            const clienteNombre = remesa ? remesa.clienteNombre : 'desconocido';
+            const monto = remesa ? remesa.monto : 'desconocido';
+            
+            // Primera confirmación con detalles específicos
+            const confirm1 = confirm(`⚠️ ELIMINAR REMESA ⚠️\n\nCliente: ${clienteNombre}\nMonto: ${monto}\n\n¿Estás completamente seguro de eliminar esta remesa?\n\nEsta acción NO se puede deshacer.`);
+            
+            if (confirm1) {
+                // Segunda confirmación para evitar eliminaciones accidentales
+                const confirm2 = confirm(`🚨 ÚLTIMA CONFIRMACIÓN 🚨\n\nVas a eliminar PERMANENTEMENTE la remesa de ${clienteNombre}.\n\n¿Estás 100% seguro?\n\nEscribe "SI" si estás seguro:`);
+                
+                if (confirm2) {
+                    console.log(`🗑️ ELIMINACIÓN AUTORIZADA - Remesa ID: ${firestoreId}, Cliente: ${clienteNombre}, Usuario: ${window.currentUser?.email || 'unknown'}`);
+                    window.deleteRemesaFromFirestore(firestoreId);
+                } else {
+                    console.log(`❌ Eliminación cancelada en segunda confirmación - ID: ${firestoreId}`);
+                    showNotification('Eliminación cancelada', 'info');
+                }
+            } else {
+                console.log(`❌ Eliminación cancelada en primera confirmación - ID: ${firestoreId}`);
+                showNotification('Eliminación cancelada', 'info');
             }
         }
 

@@ -470,6 +470,34 @@
             document.getElementById('mainApp').style.display = 'block';
             loadRemesasFromFirestore();
         };
+
+        // Función para obtener el símbolo correcto de la moneda
+        function getCurrencySymbol(moneda) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'Sol Peruano': 'S/',
+                'PEN': 'S/',
+                'Peso Colombiano': '$',
+                'COP': '$',
+                'Peso Argentino': '$',
+                'ARS': '$',
+                'Real Brasileño': 'R$',
+                'BRL': 'R$',
+                'Peso Chileno': '$',
+                'CLP': '$',
+                'Bolívar': 'Bs.',
+                'VES': 'Bs.'
+            };
+            
+            return symbols[moneda] || '$';
+        }
+
+        // Función para formatear el monto con la moneda correcta
+        function formatCurrency(monto, moneda) {
+            const symbol = getCurrencySymbol(moneda);
+            return `${symbol}${monto.toLocaleString()}`;
+        }
     </script>
 
     <style>
@@ -1597,13 +1625,40 @@
         function updateStats() {
             const today = new Date().toDateString();
             const remesasHoy = window.remesas.filter(r => new Date(r.fecha).toDateString() === today);
-            const totalMonto = window.remesas.reduce((sum, r) => sum + r.monto, 0);
+            
+            // Agrupar por moneda para mostrar un resumen más preciso
+            const totalsByMoneda = window.remesas.reduce((acc, r) => {
+                if (!acc[r.moneda]) {
+                    acc[r.moneda] = 0;
+                }
+                acc[r.moneda] += r.monto;
+                return acc;
+            }, {});
+            
+            // Crear texto del total con múltiples monedas
+            const totalText = Object.keys(totalsByMoneda).length === 0 ? 
+                '$0' : 
+                Object.entries(totalsByMoneda)
+                    .map(([moneda, total]) => `${formatCurrency(total, moneda)}`)
+                    .join(' + ');
             
             document.getElementById('totalClientes').textContent = window.remesas.length;
-            document.getElementById('totalRemesas').textContent = `$${totalMonto.toLocaleString()}`;
+            document.getElementById('totalRemesas').textContent = totalText;
             document.getElementById('remesasHoy').textContent = remesasHoy.length;
-            document.getElementById('promedioRemesa').textContent = window.remesas.length > 0 ? 
-                `$${(totalMonto / window.remesas.length).toLocaleString()}` : '$0';
+            
+            // Para el promedio, mostrar solo si hay una moneda predominante
+            if (window.remesas.length > 0) {
+                const monedaPrincipal = Object.keys(totalsByMoneda)
+                    .reduce((a, b) => totalsByMoneda[a] > totalsByMoneda[b] ? a : b);
+                const totalPrincipal = totalsByMoneda[monedaPrincipal];
+                const cantidadPrincipal = window.remesas.filter(r => r.moneda === monedaPrincipal).length;
+                const promedio = totalPrincipal / cantidadPrincipal;
+                
+                document.getElementById('promedioRemesa').textContent = 
+                    `${formatCurrency(promedio, monedaPrincipal)} (${monedaPrincipal})`;
+            } else {
+                document.getElementById('promedioRemesa').textContent = '$0';
+            }
         }
 
         function filterRemesas() {
@@ -1680,7 +1735,7 @@
                         ${remesa.observaciones ? `<p><i class="fas fa-comment"></i> ${remesa.observaciones}</p>` : ''}
                     </div>
                     <div class="remesa-amount">
-                        <div class="amount">$${remesa.monto.toLocaleString()} ${remesa.moneda}</div>
+                        <div class="amount">${formatCurrency(remesa.monto, remesa.moneda)} ${remesa.moneda}</div>
                         <div class="date">${new Date(remesa.fecha).toLocaleDateString()}</div>
                         <div class="time">${new Date(remesa.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>

@@ -215,6 +215,34 @@
             }, 3000);
         };
 
+        // Función para obtener el símbolo correcto de la moneda
+        function getCurrencySymbol(moneda) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'Sol Peruano': 'S/',
+                'PEN': 'S/',
+                'Peso Colombiano': '$',
+                'COP': '$',
+                'Peso Argentino': '$',
+                'ARS': '$',
+                'Real Brasileño': 'R$',
+                'BRL': 'R$',
+                'Peso Chileno': '$',
+                'CLP': '$',
+                'Bolívar': 'Bs.',
+                'VES': 'Bs.'
+            };
+            
+            return symbols[moneda] || '$';
+        }
+
+        // Función para formatear el monto con la moneda correcta
+        function formatCurrency(monto, moneda) {
+            const symbol = getCurrencySymbol(moneda);
+            return `${symbol}${monto.toLocaleString()}`;
+        }
+
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM cargado, inicializando autenticación...');
@@ -470,34 +498,6 @@
             document.getElementById('mainApp').style.display = 'block';
             loadRemesasFromFirestore();
         };
-
-        // Función para obtener el símbolo correcto de la moneda
-        function getCurrencySymbol(moneda) {
-            const symbols = {
-                'USD': '$',
-                'EUR': '€',
-                'Sol Peruano': 'S/',
-                'PEN': 'S/',
-                'Peso Colombiano': '$',
-                'COP': '$',
-                'Peso Argentino': '$',
-                'ARS': '$',
-                'Real Brasileño': 'R$',
-                'BRL': 'R$',
-                'Peso Chileno': '$',
-                'CLP': '$',
-                'Bolívar': 'Bs.',
-                'VES': 'Bs.'
-            };
-            
-            return symbols[moneda] || '$';
-        }
-
-        // Función para formatear el monto con la moneda correcta
-        function formatCurrency(monto, moneda) {
-            const symbol = getCurrencySymbol(moneda);
-            return `${symbol}${monto.toLocaleString()}`;
-        }
     </script>
 
     <style>

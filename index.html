@@ -348,14 +348,36 @@
                 console.error('No se encontró el formulario de login');
             }
             
+            // Variable para controlar si es la primera verificación de auth
+            let isInitialAuthCheck = true;
+            
             // Check authentication state
             onAuthStateChanged(auth, (user) => {
-                console.log('Estado de autenticación cambiado:', user);
+                console.log('Estado de autenticación cambiado:', user ? user.email : 'sin usuario');
+                
                 if (user) {
+                    console.log('Usuario autenticado:', user.email);
                     window.currentUser = user;
                     checkUserRole(user.uid);
                 } else {
-                    showLoginScreen();
+                    console.log('No hay usuario logueado');
+                    // Solo mostrar login si no es la verificación inicial o si ya pasó tiempo suficiente
+                    if (!isInitialAuthCheck) {
+                        showLoginScreen();
+                    } else {
+                        // Dar tiempo a Firebase para verificar autenticación
+                        setTimeout(() => {
+                            if (!window.currentUser) {
+                                showLoginScreen();
+                            }
+                            isInitialAuthCheck = false;
+                        }, 1000);
+                    }
+                }
+                
+                // Después de la primera verificación, cambiar el flag
+                if (isInitialAuthCheck) {
+                    isInitialAuthCheck = false;
                 }
             });
         });
@@ -402,6 +424,11 @@
                 await signOut(auth);
                 window.currentUser = null;
                 window.userRole = null;
+                window.currentUserData = null;
+                
+                // Limpiar datos de sesión
+                sessionStorage.removeItem('roleMessageShown');
+                
                 showLoginScreen();
                 showNotification('Sesión cerrada', 'success');
             } catch (error) {
@@ -517,14 +544,24 @@
         };
         
         function showRoleMessage(role) {
+            // Solo mostrar el mensaje una vez por sesión
+            if (sessionStorage.getItem('roleMessageShown')) {
+                return;
+            }
+            
             const messages = {
-                'admin': 'Tienes acceso completo: crear, editar y eliminar remesas',
-                'operador': 'Puedes crear y editar remesas (no eliminar)',
-                'consulta': 'Solo puedes consultar las remesas existentes'
+                'admin': '🔐 Acceso completo: crear, editar y eliminar remesas',
+                'operador': '✏️ Puedes crear y editar remesas',
+                'consulta': '👁️ Acceso de solo lectura'
             };
             
             const message = messages[role] || messages['operador'];
-            showNotification(message, 'info');
+            
+            // Mostrar el mensaje después de un breve delay para que no sea tan intrusivo
+            setTimeout(() => {
+                showNotification(message, 'info');
+                sessionStorage.setItem('roleMessageShown', 'true');
+            }, 2000);
         }
         
         // Función para verificar permisos antes de ejecutar acciones
@@ -564,12 +601,14 @@
 
         window.showLoginScreen = function() {
             console.log('Mostrando pantalla de login');
+            document.getElementById('initialLoadingScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
         };
 
         window.showMainApp = function() {
             console.log('Mostrando aplicación principal');
+            document.getElementById('initialLoadingScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             loadRemesasFromFirestore();
@@ -1412,6 +1451,63 @@
             font-size: 1.2rem;
         }
 
+        /* Initial Loading Screen */
+        .initial-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        .loading-content h2 {
+            margin: 0 0 2rem 0;
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        .loading-spinner-large {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        .loading-content p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -1488,8 +1584,18 @@
 <body>
     <div class="bg-animation"></div>
     
+    <!-- Initial Loading Screen -->
+    <div id="initialLoadingScreen" class="initial-loading">
+        <div class="loading-content">
+            <div class="loading-logo">💸</div>
+            <h2>Cambios Neveri</h2>
+            <div class="loading-spinner-large"></div>
+            <p>Verificando autenticación...</p>
+        </div>
+    </div>
+    
     <!-- Login Screen -->
-    <div id="loginScreen" class="login-container">
+    <div id="loginScreen" class="login-container" style="display: none;">
         <div class="login-card">
             <div class="login-header">
                 <h1>💸 Cambios Neveri</h1>

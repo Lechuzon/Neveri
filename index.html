@@ -1750,12 +1750,20 @@
                     <input type="text" id="clienteNombre" name="clienteNombre" required>
                 </div>
                 <div class="form-group">
-                    <label for="clienteEmail">Email</label>
-                    <input type="email" id="clienteEmail" name="clienteEmail">
+                    <label for="proveedor">Proveedor *</label>
+                    <select id="proveedor" name="proveedor" required>
+                        <option value="">Seleccionar proveedor</option>
+                        <option value="GIROSVEN">GIROSVEN</option>
+                        <option value="CJ COLOMBIA">CJ COLOMBIA</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="clienteTelefono">Teléfono</label>
-                    <input type="tel" id="clienteTelefono" name="clienteTelefono">
+                    <label for="tasaDia">Tasa del día *</label>
+                    <input type="number" id="tasaDia" name="tasaDia" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="tasaMayor">Tasa al mayor *</label>
+                    <input type="number" id="tasaMayor" name="tasaMayor" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label for="monto">Monto *</label>
@@ -1839,8 +1847,9 @@
                 // Llenar formulario
                 document.getElementById('agregadoPor').value = remesa.agregadoPor || getUserDisplayName();
                 document.getElementById('clienteNombre').value = remesa.clienteNombre;
-                document.getElementById('clienteEmail').value = remesa.clienteEmail || '';
-                document.getElementById('clienteTelefono').value = remesa.clienteTelefono || '';
+                document.getElementById('proveedor').value = remesa.proveedor || '';
+                document.getElementById('tasaDia').value = remesa.tasaDia || '';
+                document.getElementById('tasaMayor').value = remesa.tasaMayor || '';
                 document.getElementById('monto').value = remesa.monto;
                 document.getElementById('moneda').value = remesa.moneda;
                 document.getElementById('destinatario').value = remesa.destinatario;
@@ -2000,6 +2009,9 @@
                         <h3>${remesa.clienteNombre}</h3>
                         <p><i class="fas fa-user-friends"></i> Para: ${remesa.destinatario}</p>
                         <p><i class="fas fa-globe"></i> ${remesa.paisDestino}</p>
+                        ${remesa.proveedor ? `<p><i class="fas fa-building"></i> Proveedor: <strong>${remesa.proveedor}</strong></p>` : ''}
+                        ${remesa.tasaDia ? `<p><i class="fas fa-chart-line"></i> Tasa del día: <strong>${remesa.tasaDia}</strong></p>` : ''}
+                        ${remesa.tasaMayor ? `<p><i class="fas fa-chart-area"></i> Tasa al mayor: <strong>${remesa.tasaMayor}</strong></p>` : ''}
                         <p><i class="fas fa-user-plus"></i> Agregado por: <strong>${remesa.agregadoPor || 'Usuario'}</strong></p>
                         ${remesa.observaciones ? `<p><i class="fas fa-comment"></i> ${remesa.observaciones}</p>` : ''}
                     </div>
@@ -2032,8 +2044,9 @@
             const remesaData = {
                 agregadoPor: formData.get('agregadoPor'),
                 clienteNombre: formData.get('clienteNombre'),
-                clienteEmail: formData.get('clienteEmail'),
-                clienteTelefono: formData.get('clienteTelefono'),
+                proveedor: formData.get('proveedor'),
+                tasaDia: parseFloat(formData.get('tasaDia')),
+                tasaMayor: parseFloat(formData.get('tasaMayor')),
                 monto: parseFloat(formData.get('monto')),
                 moneda: formData.get('moneda'),
                 destinatario: formData.get('destinatario'),

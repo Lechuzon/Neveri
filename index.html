@@ -1171,6 +1171,38 @@
             font-size: 0.9rem;
         }
 
+        .remesa-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+        }
+
+        .remesa-item.expanded .remesa-details {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 0.5rem;
+        }
+
+        .remesa-info-visible {
+            margin-bottom: 0;
+        }
+
+        .expand-indicator {
+            position: absolute;
+            right: 250px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .remesa-item.expanded .expand-indicator {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
         .remesa-amount {
             text-align: right;
             margin-left: 1rem;
@@ -1683,17 +1715,17 @@
             </div>
             <div class="stat-card">
                 <div class="icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                    <i class="fas fa-calendar-day"></i>
+                    <i class="fas fa-list-ol"></i>
                 </div>
                 <div class="value" id="remesasHoy">0</div>
-                <div class="label">Remesas Hoy</div>
+                <div class="label">#Remesas</div>
             </div>
             <div class="stat-card">
                 <div class="icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-coins"></i>
                 </div>
                 <div class="value" id="promedioRemesa">$0</div>
-                <div class="label">Promedio por Remesa</div>
+                <div class="label">Ganancias</div>
             </div>
         </div>
 
@@ -1752,8 +1784,7 @@
                 <div class="form-group">
                     <label for="proveedor">Proveedor *</label>
                     <select id="proveedor" name="proveedor" required>
-                        <option value="">Seleccionar proveedor</option>
-                        <option value="GIROSVEN">GIROSVEN</option>
+                        <option value="GIROSVEN" selected>GIROSVEN</option>
                         <option value="CJ COLOMBIA">CJ COLOMBIA</option>
                     </select>
                 </div>
@@ -1773,7 +1804,7 @@
                     <label for="moneda">Moneda *</label>
                     <select id="moneda" name="moneda" required>
                         <option value="USD">USD - Dólar Americano</option>
-                        <option value="PEN">PEN - Sol Peruano</option>
+                        <option value="PEN" selected>PEN - Sol Peruano</option>
                         <option value="VES">VES - Bolívar</option>
                         <option value="COP">COP - Peso Colombiano</option>
                     </select>
@@ -1783,10 +1814,17 @@
                     <input type="text" id="destinatario" name="destinatario" required>
                 </div>
                 <div class="form-group">
+                    <label for="tipoBancoVzla">Tipo de Banco en Vzla *</label>
+                    <select id="tipoBancoVzla" name="tipoBancoVzla" required>
+                        <option value="Banesco" selected>Banesco</option>
+                        <option value="Banco de Venezuela">Banco de Venezuela</option>
+                        <option value="Pago Movil">Pago Movil</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="paisDestino">País de Destino *</label>
                     <select id="paisDestino" name="paisDestino" required>
-                        <option value="">Seleccionar país</option>
-                        <option value="Venezuela">Venezuela</option>
+                        <option value="Venezuela" selected>Venezuela</option>
                         <option value="Colombia">Colombia</option>
                         <option value="Ecuador">Ecuador</option>
                         <option value="Perú">Perú</option>
@@ -1796,6 +1834,16 @@
                         <option value="Argentina">Argentina</option>
                         <option value="Chile">Chile</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="imagenComprobante">Imagen/Comprobante *</label>
+                    <input type="file" id="imagenComprobante" name="imagenComprobante" accept="image/*" required>
+                    <div id="imagenPreview" style="margin-top: 10px; display: none;">
+                        <img id="imagenPreviewImg" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                        <button type="button" onclick="removeImage()" style="display: block; margin-top: 5px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            <i class="fas fa-times"></i> Eliminar imagen
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="observaciones">Observaciones</label>
@@ -1833,11 +1881,40 @@
             return displayName;
         }
 
+        function mostrarImagen(imagenBase64) {
+            // Crear modal para mostrar la imagen
+            const modalHTML = `
+                <div id="imageModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="this.remove()">
+                    <div style="position: relative; max-width: 90%; max-height: 90%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                        <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                        <img src="${imagenBase64}" style="max-width: 100%; max-height: 80vh; border-radius: 8px;" onclick="event.stopPropagation()">
+                        <div style="margin-top: 15px; text-align: center;">
+                            <a href="${imagenBase64}" download="comprobante.jpg" style="display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 8px; font-weight: 500;">
+                                <i class="fas fa-download"></i> Descargar imagen
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function toggleRemesaDetails(event, element) {
+            // Si el clic es en un botón o enlace, no expandir
+            if (event.target.closest('.remesa-actions') || event.target.closest('a')) {
+                return;
+            }
+            element.classList.toggle('expanded');
+        }
+
         function openModal(remesa = null) {
             const modal = document.getElementById('modal');
             const modalTitle = document.getElementById('modalTitle');
             const submitBtn = document.getElementById('submitBtn');
             const form = document.getElementById('remesaForm');
+            
+            // Resetear imagen al abrir modal
+            removeImage();
             
             if (remesa) {
                 modalTitle.textContent = 'Editar Remesa';
@@ -1853,8 +1930,18 @@
                 document.getElementById('monto').value = remesa.monto;
                 document.getElementById('moneda').value = remesa.moneda;
                 document.getElementById('destinatario').value = remesa.destinatario;
+                document.getElementById('tipoBancoVzla').value = remesa.tipoBancoVzla || 'Banesco';
                 document.getElementById('paisDestino').value = remesa.paisDestino;
                 document.getElementById('observaciones').value = remesa.observaciones || '';
+                
+                // Cargar imagen si existe
+                if (remesa.imagenComprobante) {
+                    imagenBase64 = remesa.imagenComprobante;
+                    const preview = document.getElementById('imagenPreview');
+                    const previewImg = document.getElementById('imagenPreviewImg');
+                    previewImg.src = imagenBase64;
+                    preview.style.display = 'block';
+                }
             } else {
                 modalTitle.textContent = 'Nueva Remesa';
                 submitBtn.textContent = 'Guardar Remesa';
@@ -1900,12 +1987,15 @@
             }
         }
 
-        function updateStats() {
-            const today = new Date().toDateString();
-            const remesasHoy = window.remesas.filter(r => new Date(r.fecha).toDateString() === today);
+        function updateStats(remesasParaStats = null) {
+            // Si no se pasan remesas específicas, usar todas
+            const remesasACalcular = remesasParaStats || window.remesas;
+            
+            // Contar clientes únicos
+            const clientesUnicos = new Set(remesasACalcular.map(r => r.clienteNombre)).size;
             
             // Agrupar por moneda para mostrar un resumen más preciso
-            const totalsByMoneda = window.remesas.reduce((acc, r) => {
+            const totalsByMoneda = remesasACalcular.reduce((acc, r) => {
                 if (!acc[r.moneda]) {
                     acc[r.moneda] = 0;
                 }
@@ -1920,20 +2010,30 @@
                     .map(([moneda, total]) => `${window.formatCurrency(total, moneda)}`)
                     .join(' + ');
             
-            document.getElementById('totalClientes').textContent = window.remesas.length;
+            document.getElementById('totalClientes').textContent = clientesUnicos;
             document.getElementById('totalRemesas').textContent = totalText;
-            document.getElementById('remesasHoy').textContent = remesasHoy.length;
+            document.getElementById('remesasHoy').textContent = remesasACalcular.length;
             
-            // Para el promedio, mostrar solo si hay una moneda predominante
-            if (window.remesas.length > 0) {
-                const monedaPrincipal = Object.keys(totalsByMoneda)
-                    .reduce((a, b) => totalsByMoneda[a] > totalsByMoneda[b] ? a : b);
-                const totalPrincipal = totalsByMoneda[monedaPrincipal];
-                const cantidadPrincipal = window.remesas.filter(r => r.moneda === monedaPrincipal).length;
-                const promedio = totalPrincipal / cantidadPrincipal;
+            // Calcular ganancias totales por moneda
+            if (remesasACalcular.length > 0) {
+                const gananciasByMoneda = remesasACalcular.reduce((acc, r) => {
+                    if (r.ganancia !== undefined) {
+                        if (!acc[r.moneda]) {
+                            acc[r.moneda] = 0;
+                        }
+                        acc[r.moneda] += r.ganancia;
+                    }
+                    return acc;
+                }, {});
                 
-                document.getElementById('promedioRemesa').textContent = 
-                    `${window.formatCurrency(promedio, monedaPrincipal)} (${monedaPrincipal})`;
+                // Crear texto de ganancias con múltiples monedas
+                const gananciasText = Object.keys(gananciasByMoneda).length === 0 ? 
+                    '$0' : 
+                    Object.entries(gananciasByMoneda)
+                        .map(([moneda, total]) => `${window.formatCurrency(total, moneda)} ${moneda}`)
+                        .join(' + ');
+                
+                document.getElementById('promedioRemesa').textContent = gananciasText;
             } else {
                 document.getElementById('promedioRemesa').textContent = '$0';
             }
@@ -1983,6 +2083,9 @@
                     break;
             }
             
+            // Actualizar estadísticas con las remesas filtradas
+            updateStats(filteredRemesas);
+            
             renderRemesas(filteredRemesas);
         }
 
@@ -2001,20 +2104,28 @@
             }
             
             container.innerHTML = remesasList.map(remesa => `
-                <div class="remesa-item">
+                <div class="remesa-item" onclick="toggleRemesaDetails(event, this)">
                     <div class="remesa-avatar">
                         ${remesa.clienteNombre.charAt(0).toUpperCase()}
                     </div>
                     <div class="remesa-info">
                         <h3>${remesa.clienteNombre}</h3>
-                        <p><i class="fas fa-user-friends"></i> Para: ${remesa.destinatario}</p>
-                        <p><i class="fas fa-globe"></i> ${remesa.paisDestino}</p>
-                        ${remesa.proveedor ? `<p><i class="fas fa-building"></i> Proveedor: <strong>${remesa.proveedor}</strong></p>` : ''}
-                        ${remesa.tasaDia ? `<p><i class="fas fa-chart-line"></i> Tasa del día: <strong>${remesa.tasaDia}</strong></p>` : ''}
-                        ${remesa.tasaMayor ? `<p><i class="fas fa-chart-area"></i> Tasa al mayor: <strong>${remesa.tasaMayor}</strong></p>` : ''}
-                        <p><i class="fas fa-user-plus"></i> Agregado por: <strong>${remesa.agregadoPor || 'Usuario'}</strong></p>
-                        ${remesa.observaciones ? `<p><i class="fas fa-comment"></i> ${remesa.observaciones}</p>` : ''}
+                        <div class="remesa-info-visible">
+                            <p><i class="fas fa-user-friends"></i> Para: ${remesa.destinatario}</p>
+                            <p><i class="fas fa-globe"></i> ${remesa.paisDestino}</p>
+                            <p><i class="fas fa-user-plus"></i> Agregado por: <strong>${remesa.agregadoPor || 'Usuario'}</strong></p>
+                            ${remesa.ganancia !== undefined ? `<p><i class="fas fa-coins"></i> Ganancia: <strong style="color: #4CAF50;">${window.formatCurrency(remesa.ganancia, remesa.moneda)} ${remesa.moneda}</strong></p>` : ''}
+                            ${remesa.imagenComprobante ? `<p><i class="fas fa-image"></i> <a href="#" onclick="mostrarImagen('${remesa.imagenComprobante}'); return false;" style="color: #4CAF50; text-decoration: underline;">Ver comprobante</a></p>` : ''}
+                        </div>
+                        <div class="remesa-details">
+                            ${remesa.proveedor ? `<p><i class="fas fa-building"></i> Proveedor: <strong>${remesa.proveedor}</strong></p>` : ''}
+                            ${remesa.tipoBancoVzla ? `<p><i class="fas fa-university"></i> Banco: <strong>${remesa.tipoBancoVzla}</strong></p>` : ''}
+                            ${remesa.tasaDia ? `<p><i class="fas fa-chart-line"></i> Tasa del día: <strong>${remesa.tasaDia}</strong></p>` : ''}
+                            ${remesa.tasaMayor ? `<p><i class="fas fa-chart-area"></i> Tasa al mayor: <strong>${remesa.tasaMayor}</strong></p>` : ''}
+                            ${remesa.observaciones ? `<p><i class="fas fa-comment"></i> ${remesa.observaciones}</p>` : ''}
+                        </div>
                     </div>
+                    <i class="fas fa-chevron-down expand-indicator"></i>
                     <div class="remesa-amount">
                         <div class="amount">${window.formatCurrency(remesa.monto, remesa.moneda)} ${remesa.moneda}</div>
                         <div class="date">${new Date(remesa.fecha).toLocaleDateString()}</div>
@@ -2022,12 +2133,12 @@
                     </div>
                     <div class="remesa-actions">
                         ${window.hasPermission && window.hasPermission('edit') ? `
-                        <button class="btn-icon btn-edit" onclick="openModal(${JSON.stringify(remesa).replace(/"/g, '&quot;')})">
+                        <button class="btn-icon btn-edit" onclick="openModal(${JSON.stringify(remesa).replace(/"/g, '&quot;')}); event.stopPropagation();">
                             <i class="fas fa-edit"></i>
                         </button>
                         ` : ''}
                         ${window.hasPermission && window.hasPermission('delete') ? `
-                        <button class="btn-icon btn-delete" onclick="deleteRemesa('${remesa.firestoreId}')">
+                        <button class="btn-icon btn-delete" onclick="deleteRemesa('${remesa.firestoreId}'); event.stopPropagation();">
                             <i class="fas fa-trash"></i>
                         </button>
                         ` : ''}
@@ -2036,22 +2147,76 @@
             `).join('');
         }
 
+        // Funciones para manejar la imagen
+        let imagenBase64 = null;
+
+        document.getElementById('imagenComprobante').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Verificar que sea una imagen
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor selecciona un archivo de imagen válido');
+                    return;
+                }
+                
+                // Verificar tamaño (máximo 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen es muy grande. Por favor selecciona una imagen menor a 5MB');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagenBase64 = event.target.result;
+                    const preview = document.getElementById('imagenPreview');
+                    const previewImg = document.getElementById('imagenPreviewImg');
+                    previewImg.src = imagenBase64;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function removeImage() {
+            imagenBase64 = null;
+            document.getElementById('imagenComprobante').value = '';
+            document.getElementById('imagenPreview').style.display = 'none';
+            document.getElementById('imagenPreviewImg').src = '';
+        }
+
         // Event listeners
         document.getElementById('remesaForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Validar que se haya subido una imagen
+            if (!imagenBase64) {
+                alert('⚠️ Por favor sube una imagen o comprobante de la transacción');
+                return;
+            }
+            
             const formData = new FormData(this);
+            
+            const tasaDia = parseFloat(formData.get('tasaDia'));
+            const tasaMayor = parseFloat(formData.get('tasaMayor'));
+            const monto = parseFloat(formData.get('monto'));
+            
+            // Calcular ganancia: (Tasa del día - Tasa al mayor) * Monto
+            const ganancia = (tasaDia - tasaMayor) * monto;
             
             const remesaData = {
                 agregadoPor: formData.get('agregadoPor'),
                 clienteNombre: formData.get('clienteNombre'),
                 proveedor: formData.get('proveedor'),
-                tasaDia: parseFloat(formData.get('tasaDia')),
-                tasaMayor: parseFloat(formData.get('tasaMayor')),
-                monto: parseFloat(formData.get('monto')),
+                tasaDia: tasaDia,
+                tasaMayor: tasaMayor,
+                monto: monto,
                 moneda: formData.get('moneda'),
                 destinatario: formData.get('destinatario'),
+                tipoBancoVzla: formData.get('tipoBancoVzla'),
                 paisDestino: formData.get('paisDestino'),
                 observaciones: formData.get('observaciones'),
+                imagenComprobante: imagenBase64,
+                ganancia: ganancia,
                 fecha: window.editingId ? window.remesas.find(r => r.firestoreId === window.editingId).fecha : new Date().toISOString()
             };
             

@@ -436,7 +436,7 @@
                 userDoc.forEach((doc) => {
                     if (doc.data().uid === uid) {
                         const userData = doc.data();
-                        window.userRole = userData.role || 'operador';
+                        window.userRole = userData.role || 'moderador';
                         window.currentUserData = userData; // Almacenar datos del usuario
                         userFound = true;
                     }
@@ -447,20 +447,20 @@
                     const userData = {
                         uid: uid,
                         email: window.currentUser.email,
-                        role: 'operador',
+                        role: 'moderador',
                         name: getUserDisplayName(), // Usar el nombre generado automáticamente
                         createdAt: new Date()
                     };
                     
                     await setDoc(doc(db, 'users', uid), userData);
-                    window.userRole = 'operador';
+                    window.userRole = 'moderador';
                     window.currentUserData = userData;
                 }
                 
                 setupUserPermissions();
             } catch (error) {
                 console.error('Error checking user role:', error);
-                window.userRole = 'operador'; // Rol por defecto
+                window.userRole = 'moderador'; // Rol por defecto
                 setupUserPermissions();
             }
         };
@@ -472,7 +472,7 @@
             if (userInfo) {
                 const roleColors = {
                     'admin': '#e74c3c',
-                    'operador': '#3498db', 
+                    'moderador': '#3498db', 
                     'consulta': '#95a5a6'
                 };
                 
@@ -497,7 +497,7 @@
                     canDelete: true,
                     canView: true
                 },
-                'operador': {
+                'moderador': {
                     canCreate: true,
                     canEdit: true,
                     canDelete: false,
@@ -511,7 +511,7 @@
                 }
             };
             
-            const userPermissions = permissions[window.userRole] || permissions['operador'];
+            const userPermissions = permissions[window.userRole] || permissions['moderador'];
             
             // Aplicar permisos a botones existentes
             const deleteButtons = document.querySelectorAll('.btn-delete');
@@ -546,11 +546,11 @@
             
             const messages = {
                 'admin': '🔐 Acceso completo: crear, editar y eliminar remesas',
-                'operador': '✏️ Puedes crear y editar remesas',
+                'moderador': '✏️ Puedes crear y editar remesas',
                 'consulta': '👁️ Acceso de solo lectura'
             };
             
-            const message = messages[role] || messages['operador'];
+            const message = messages[role] || messages['moderador'];
             
             // Mostrar el mensaje después de un breve delay para que no sea tan intrusivo
             setTimeout(() => {
@@ -563,11 +563,11 @@
         window.hasPermission = function(action) {
             const permissions = {
                 'admin': ['create', 'edit', 'delete', 'view'],
-                'operador': ['create', 'edit', 'view'],
+                'moderador': ['create', 'edit', 'view'],
                 'consulta': ['view']
             };
             
-            const userPermissions = permissions[window.userRole] || permissions['operador'];
+            const userPermissions = permissions[window.userRole] || permissions['moderador'];
             return userPermissions.includes(action);
         };
         

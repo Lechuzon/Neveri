@@ -2200,8 +2200,8 @@
             const tasaMayor = parseFloat(formData.get('tasaMayor'));
             const monto = parseFloat(formData.get('monto'));
             
-            // Calcular ganancia: (Tasa al mayor - Tasa del día) * Monto
-            const ganancia = ((tasaMayor - tasaDia)/1) * monto;
+            // Calcular ganancia: (Tasa al mayor - Tasa del día) / 100 * Monto
+            const ganancia = ((tasaMayor - tasaDia)/100) * monto;
             
             const remesaData = {
                 agregadoPor: formData.get('agregadoPor'),

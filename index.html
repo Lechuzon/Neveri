@@ -800,6 +800,323 @@
             background: #dc2626;
         }
 
+        .btn-reports {
+            background: linear-gradient(135deg, var(--accent-color), #d97706);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-reports:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-2px);
+        }
+
+        /* Reports Modal */
+        .reports-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 3000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .reports-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .reports-modal-content {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem;
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--border);
+        }
+
+        .reports-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .month-selector {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: var(--surface-alt);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+        }
+
+        .month-selector select {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 150px;
+        }
+
+        .month-selector select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .month-selector button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .month-selector button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .report-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-stat-card {
+            background: linear-gradient(135deg, var(--surface-alt), white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .report-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .report-stat-card.ganancias {
+            border-left-color: var(--success-color);
+        }
+
+        .report-stat-card.total {
+            border-left-color: var(--secondary-color);
+        }
+
+        .report-stat-card.clientes {
+            border-left-color: var(--accent-color);
+        }
+
+        .report-stat-card.remesas {
+            border-left-color: var(--primary-color);
+        }
+
+        .report-stat-card .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .report-stat-card.ganancias .stat-icon {
+            background: linear-gradient(135deg, var(--success-color), #16a34a);
+        }
+
+        .report-stat-card.total .stat-icon {
+            background: linear-gradient(135deg, var(--secondary-color), #059669);
+        }
+
+        .report-stat-card.clientes .stat-icon {
+            background: linear-gradient(135deg, var(--accent-color), #d97706);
+        }
+
+        .report-stat-card.remesas .stat-icon {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+
+        .report-stat-card .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .report-stat-card .stat-detail {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .report-section {
+            background: var(--surface-alt);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .report-section h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .report-table thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        .report-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .report-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-table tbody tr:hover {
+            background: var(--surface-alt);
+        }
+
+        .report-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .currency-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--surface-alt);
+            color: var(--text-secondary);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .btn-export {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-export.excel {
+            background: linear-gradient(135deg, #107c41, #0e6b37);
+            color: white;
+        }
+
+        .btn-export.pdf {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn-export.print {
+            background: linear-gradient(135deg, var(--text-secondary), var(--text-primary));
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .no-data-message i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -1745,6 +2062,10 @@
                     <i class="fas fa-plus"></i> Nueva Remesa
                 </button>
                 
+                <button class="btn-reports" onclick="openReportsModal()">
+                    <i class="fas fa-chart-bar"></i> Reportes Mensuales
+                </button>
+                
                 <div class="filter-buttons">
                     <button class="filter-btn active" data-filter="all">Todas</button>
                     <button class="filter-btn" data-filter="today">Hoy</button>
@@ -1864,6 +2185,43 @@
                     <button type="submit" class="btn btn-success" id="submitBtn">Guardar Remesa</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div class="reports-modal" id="reportsModal">
+        <div class="reports-modal-content">
+            <div class="reports-header">
+                <h2>
+                    <i class="fas fa-chart-line"></i>
+                    Reportes Mensuales
+                </h2>
+                <button class="close-btn" onclick="closeReportsModal()">×</button>
+            </div>
+
+            <div class="month-selector">
+                <label style="font-weight: 600; color: var(--text-primary);">
+                    <i class="fas fa-calendar-alt"></i> Seleccionar Mes:
+                </label>
+                <select id="monthSelect">
+                    <!-- Se llenará dinámicamente -->
+                </select>
+                <select id="yearSelect">
+                    <!-- Se llenará dinámicamente -->
+                </select>
+                <button onclick="generateReport()">
+                    <i class="fas fa-sync-alt"></i>
+                    Generar Reporte
+                </button>
+            </div>
+
+            <div id="reportContent">
+                <div class="no-data-message">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>Selecciona un mes para ver el reporte</h3>
+                    <p>Elige el mes y año, luego haz clic en "Generar Reporte"</p>
+                </div>
+            </div>
         </div>
     </div>
     </div> <!-- End mainApp -->
@@ -2254,12 +2612,453 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
+                closeReportsModal();
             }
             if (e.ctrlKey && e.key === 'n') {
                 e.preventDefault();
                 openModal();
             }
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                openReportsModal();
+            }
         });
+
+        // ==================== REPORTES MENSUALES ====================
+
+        function openReportsModal() {
+            const modal = document.getElementById('reportsModal');
+            modal.classList.add('show');
+            initializeReportSelectors();
+        }
+
+        function closeReportsModal() {
+            const modal = document.getElementById('reportsModal');
+            modal.classList.remove('show');
+        }
+
+        function initializeReportSelectors() {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            // Meses
+            const months = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+            
+            monthSelect.innerHTML = months.map((month, index) => 
+                `<option value="${index}">${month}</option>`
+            ).join('');
+            
+            // Años (últimos 3 años y próximo año)
+            const currentYear = new Date().getFullYear();
+            const years = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
+            
+            yearSelect.innerHTML = years.map(year => 
+                `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`
+            ).join('');
+            
+            // Seleccionar mes actual
+            const currentMonth = new Date().getMonth();
+            monthSelect.value = currentMonth;
+        }
+
+        function generateReport() {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            const selectedMonth = parseInt(monthSelect.value);
+            const selectedYear = parseInt(yearSelect.value);
+            
+            const monthName = monthSelect.options[monthSelect.selectedIndex].text;
+            
+            // Filtrar remesas del mes seleccionado
+            const monthRemesas = window.remesas.filter(remesa => {
+                const remesaDate = new Date(remesa.fecha);
+                return remesaDate.getMonth() === selectedMonth && 
+                       remesaDate.getFullYear() === selectedYear;
+            });
+            
+            if (monthRemesas.length === 0) {
+                document.getElementById('reportContent').innerHTML = `
+                    <div class="no-data-message">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No hay datos para ${monthName} ${selectedYear}</h3>
+                        <p>No se encontraron remesas registradas en este período</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calcular estadísticas
+            const stats = calculateMonthStats(monthRemesas);
+            
+            // Generar HTML del reporte
+            const reportHTML = `
+                <div class="report-stats-grid">
+                    <div class="report-stat-card ganancias">
+                        <div class="stat-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-label">Ganancias Totales</div>
+                        <div class="stat-value">${formatCurrencyReport(stats.totalGanancias)}</div>
+                        <div class="stat-detail">En ${monthRemesas.length} operaciones</div>
+                    </div>
+                    
+                    <div class="report-stat-card total">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-label">Total Enviado</div>
+                        <div class="stat-value">${formatCurrencyReport(stats.totalEnviado)}</div>
+                        <div class="stat-detail">Suma de todas las remesas</div>
+                    </div>
+                    
+                    <div class="report-stat-card clientes">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-label">Clientes</div>
+                        <div class="stat-value">${stats.totalClientes}</div>
+                        <div class="stat-detail">Clientes únicos</div>
+                    </div>
+                    
+                    <div class="report-stat-card remesas">
+                        <div class="stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-label">Remesas</div>
+                        <div class="stat-value">${monthRemesas.length}</div>
+                        <div class="stat-detail">Transacciones procesadas</div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>
+                        <i class="fas fa-money-bill-wave"></i>
+                        Desglose por Moneda
+                    </h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Moneda</th>
+                                <th>Total Enviado</th>
+                                <th>Ganancias</th>
+                                <th>Operaciones</th>
+                                <th>Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateCurrencyBreakdown(monthRemesas)}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h3>
+                        <i class="fas fa-building"></i>
+                        Desglose por Proveedor
+                    </h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Proveedor</th>
+                                <th>Remesas</th>
+                                <th>Total</th>
+                                <th>Ganancias</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateProviderBreakdown(monthRemesas)}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h3>
+                        <i class="fas fa-globe"></i>
+                        Desglose por País Destino
+                    </h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>País</th>
+                                <th>Remesas</th>
+                                <th>Porcentaje</th>
+                                <th>Total Enviado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateCountryBreakdown(monthRemesas)}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h3>
+                        <i class="fas fa-user-tie"></i>
+                        Top 10 Clientes del Mes
+                    </h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cliente</th>
+                                <th>Remesas</th>
+                                <th>Total Enviado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateTopClients(monthRemesas)}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="export-buttons">
+                    <button class="btn-export excel" onclick="exportToExcel('${monthName}', ${selectedYear})">
+                        <i class="fas fa-file-excel"></i>
+                        Exportar a Excel
+                    </button>
+                    <button class="btn-export pdf" onclick="exportToPDF('${monthName}', ${selectedYear})">
+                        <i class="fas fa-file-pdf"></i>
+                        Exportar a PDF
+                    </button>
+                    <button class="btn-export print" onclick="printReport()">
+                        <i class="fas fa-print"></i>
+                        Imprimir
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('reportContent').innerHTML = reportHTML;
+        }
+
+        function calculateMonthStats(remesas) {
+            const totalEnviado = {};
+            const totalGanancias = {};
+            const clientesUnicos = new Set();
+            
+            remesas.forEach(remesa => {
+                // Total enviado por moneda
+                if (!totalEnviado[remesa.moneda]) {
+                    totalEnviado[remesa.moneda] = 0;
+                }
+                totalEnviado[remesa.moneda] += remesa.monto;
+                
+                // Total ganancias por moneda
+                if (remesa.ganancia !== undefined) {
+                    if (!totalGanancias[remesa.moneda]) {
+                        totalGanancias[remesa.moneda] = 0;
+                    }
+                    totalGanancias[remesa.moneda] += remesa.ganancia;
+                }
+                
+                // Clientes únicos
+                clientesUnicos.add(remesa.clienteNombre);
+            });
+            
+            return {
+                totalEnviado,
+                totalGanancias,
+                totalClientes: clientesUnicos.size
+            };
+        }
+
+        function formatCurrencyReport(amounts) {
+            if (typeof amounts === 'number') {
+                return `$${amounts.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+            
+            return Object.entries(amounts)
+                .map(([moneda, total]) => `${window.formatCurrency(total, moneda)} ${moneda}`)
+                .join(' + ') || '$0.00';
+        }
+
+        function generateCurrencyBreakdown(remesas) {
+            const breakdown = {};
+            
+            remesas.forEach(remesa => {
+                if (!breakdown[remesa.moneda]) {
+                    breakdown[remesa.moneda] = {
+                        total: 0,
+                        ganancias: 0,
+                        count: 0
+                    };
+                }
+                
+                breakdown[remesa.moneda].total += remesa.monto;
+                breakdown[remesa.moneda].ganancias += remesa.ganancia || 0;
+                breakdown[remesa.moneda].count++;
+            });
+            
+            return Object.entries(breakdown)
+                .map(([moneda, data]) => `
+                    <tr>
+                        <td><span class="currency-badge">${moneda}</span></td>
+                        <td><strong>${window.formatCurrency(data.total, moneda)}</strong></td>
+                        <td style="color: var(--success-color); font-weight: 700;">
+                            ${window.formatCurrency(data.ganancias, moneda)}
+                        </td>
+                        <td>${data.count}</td>
+                        <td>${window.formatCurrency(data.total / data.count, moneda)}</td>
+                    </tr>
+                `).join('');
+        }
+
+        function generateProviderBreakdown(remesas) {
+            const breakdown = {};
+            
+            remesas.forEach(remesa => {
+                const proveedor = remesa.proveedor || 'Sin especificar';
+                if (!breakdown[proveedor]) {
+                    breakdown[proveedor] = {
+                        count: 0,
+                        total: {},
+                        ganancias: {}
+                    };
+                }
+                
+                breakdown[proveedor].count++;
+                
+                if (!breakdown[proveedor].total[remesa.moneda]) {
+                    breakdown[proveedor].total[remesa.moneda] = 0;
+                }
+                breakdown[proveedor].total[remesa.moneda] += remesa.monto;
+                
+                if (remesa.ganancia !== undefined) {
+                    if (!breakdown[proveedor].ganancias[remesa.moneda]) {
+                        breakdown[proveedor].ganancias[remesa.moneda] = 0;
+                    }
+                    breakdown[proveedor].ganancias[remesa.moneda] += remesa.ganancia;
+                }
+            });
+            
+            return Object.entries(breakdown)
+                .map(([proveedor, data]) => `
+                    <tr>
+                        <td><strong>${proveedor}</strong></td>
+                        <td>${data.count}</td>
+                        <td>${formatCurrencyReport(data.total)}</td>
+                        <td style="color: var(--success-color); font-weight: 700;">
+                            ${formatCurrencyReport(data.ganancias)}
+                        </td>
+                    </tr>
+                `).join('');
+        }
+
+        function generateCountryBreakdown(remesas) {
+            const breakdown = {};
+            
+            remesas.forEach(remesa => {
+                const pais = remesa.paisDestino;
+                if (!breakdown[pais]) {
+                    breakdown[pais] = {
+                        count: 0,
+                        total: {}
+                    };
+                }
+                
+                breakdown[pais].count++;
+                
+                if (!breakdown[pais].total[remesa.moneda]) {
+                    breakdown[pais].total[remesa.moneda] = 0;
+                }
+                breakdown[pais].total[remesa.moneda] += remesa.monto;
+            });
+            
+            const total = remesas.length;
+            
+            return Object.entries(breakdown)
+                .sort((a, b) => b[1].count - a[1].count)
+                .map(([pais, data]) => `
+                    <tr>
+                        <td><strong>${pais}</strong></td>
+                        <td>${data.count}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="width: 100px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${(data.count / total * 100)}%; height: 100%; background: var(--primary-color);"></div>
+                                </div>
+                                <span>${((data.count / total) * 100).toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td>${formatCurrencyReport(data.total)}</td>
+                    </tr>
+                `).join('');
+        }
+
+        function generateTopClients(remesas) {
+            const clients = {};
+            
+            remesas.forEach(remesa => {
+                if (!clients[remesa.clienteNombre]) {
+                    clients[remesa.clienteNombre] = {
+                        count: 0,
+                        total: {}
+                    };
+                }
+                
+                clients[remesa.clienteNombre].count++;
+                
+                if (!clients[remesa.clienteNombre].total[remesa.moneda]) {
+                    clients[remesa.clienteNombre].total[remesa.moneda] = 0;
+                }
+                clients[remesa.clienteNombre].total[remesa.moneda] += remesa.monto;
+            });
+            
+            return Object.entries(clients)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 10)
+                .map(([cliente, data], index) => `
+                    <tr>
+                        <td><strong>#${index + 1}</strong></td>
+                        <td>${cliente}</td>
+                        <td>${data.count}</td>
+                        <td><strong>${formatCurrencyReport(data.total)}</strong></td>
+                    </tr>
+                `).join('');
+        }
+
+        function exportToExcel(month, year) {
+            showNotification('Función de exportación a Excel en desarrollo', 'info');
+            console.log(`Exportando reporte de ${month} ${year} a Excel`);
+            // Aquí se puede implementar la exportación real usando bibliotecas como SheetJS
+        }
+
+        function exportToPDF(month, year) {
+            showNotification('Función de exportación a PDF en desarrollo', 'info');
+            console.log(`Exportando reporte de ${month} ${year} a PDF`);
+            // Aquí se puede implementar la exportación real usando bibliotecas como jsPDF
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        // Estilo para impresión
+        const printStyles = document.createElement('style');
+        printStyles.innerHTML = `
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+                .reports-modal-content, .reports-modal-content * {
+                    visibility: visible;
+                }
+                .reports-modal-content {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                }
+                .reports-header button,
+                .month-selector,
+                .export-buttons {
+                    display: none !important;
+                }
+            }
+        `;
+        document.head.appendChild(printStyles);
 
         </script>
     </div> <!-- End mainApp -->
